@@ -213,12 +213,15 @@ if __name__ == '__main__':
     print(f"Loading local database storage...")
     print(f"Serving files from current working directory...")
     
-    with socketserver.TCPServer(("", PORT), handler) as httpd:
-        print(f"--------------------------------------------------")
-        print(f"NutriLife Web Application successfully started!")
-        print(f"Local Server URL: http://localhost:{PORT}")
-        print(f"Press CTRL+C to terminate the server gracefully.")
-        print(f"--------------------------------------------------")
+    import os
+    PORT = int(os.environ.get("PORT",8000))
+
+    with socketserver.TCPServer(("0.0.0.0",PORT), handler) as httpd:
+    print(f"----------------------------")
+    print(f"Nutrilife Web Application successfully started!")
+    print(f"Live Deployment Server running on port: {PORT}")
+    print(f"Press CTRL+C to terminate the server gracefully.")
+    print(f"----------------------------")
         try:
             httpd.serve_forever()
         except KeyboardInterrupt:
