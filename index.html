@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NutriLife - Eat Smart, Live Healthy | Premium Nutrition & Diet Planner</title>
+  
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="Educate yourself with NutriLife. Calculate BMI, plan customized healthy AI diets, track daily habits, read expert blogs, and chat with our smart AI Nutrition Assistant.">
+  <meta name="keywords" content="nutrition, healthy eating, diet planner, BMI calculator, habit tracker, disease prevention, superfoods">
+  <meta name="author" content="NutriLife Health-Tech">
+  <meta name="theme-color" content="#10b981">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="NutriLife - Eat Smart, Live Healthy">
+  <meta property="og:description" content="Discover superfoods, generate personalized diet plans, and track your water, calories, and routines with our modern dashboard.">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            emerald: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              200: '#a7f3d0',
+              300: '#6ee7b7',
+              400: '#34d399',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- FontAwesome for Premium Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="css/styles.css">
+
+  <!-- React & Babel Standalone CDNs -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- ApexCharts CDN for Premium Interactive Infographics -->
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+  <!-- PWA & Offline Support Prep -->
+  <link rel="manifest" href="manifest.json" id="manifest-placeholder">
+</head>
+<body class="transition-colors duration-300">
+  <div id="root">
+    <!-- Animated Loading Screen before React mount -->
+    <div id="initial-loader" class="flex flex-col items-center justify-center min-h-screen bg-[#f8fafc] dark:bg-[#0b0f19] transition-colors duration-300">
+      <div class="relative w-24 h-24 flex items-center justify-center">
+        <!-- Pulse circles -->
+        <div class="absolute w-20 h-20 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin"></div>
+        <div class="absolute w-14 h-14 rounded-full border-4 border-emerald-300 border-b-transparent animate-spin" style="animation-direction: reverse; animation-duration: 1.5s;"></div>
+        <i class="fa-solid fa-leaf text-3xl text-emerald-500 animate-pulse"></i>
+      </div>
+      <h1 class="mt-6 text-2xl font-bold tracking-wider text-slate-800 dark:text-slate-100 font-sans">
+        NUTRILIFE
+      </h1>
+      <p class="mt-2 text-sm text-emerald-600 dark:text-emerald-400 font-medium animate-pulse">
+        Nurturing a healthier you...
+      </p>
+    </div>
+  </div>
+
+  <!-- Manifest JSON Setup -->
+  <script>
+    const manifest = {
+      "name": "NutriLife Nutrition Awareness App",
+      "short_name": "NutriLife",
+      "start_url": "/",
+      "display": "standalone",
+      "background_color": "#0b0f19",
+      "theme_color": "#10b981",
+      "description": "Premium AI-powered nutrition awareness platform.",
+      "icons": [
+        {
+          "src": "https://cdn-icons-png.flaticon.com/512/3076/3076134.png",
+          "sizes": "512x512",
+          "type": "image/png"
+        }
+      ]
+    };
+    const stringManifest = JSON.stringify(manifest);
+    const blob = new Blob([stringManifest], {type: 'application/json'});
+    const manifestURL = URL.createObjectURL(blob);
+    document.querySelector('#manifest-placeholder').setAttribute('href', manifestURL);
+  </script>
+
+  <!-- Load Nutrition Data First -->
+  <script type="text/babel" src="js/data/nutritionData.js"></script>
+
+  <!-- Load Component Views -->
+  <script type="text/babel" src="js/components/Navbar.js"></script>
+  <script type="text/babel" src="js/components/Footer.js"></script>
+  <script type="text/babel" src="js/components/Home.js"></script>
+  <script type="text/babel" src="js/components/Encyclopedia.js"></script>
+  <script type="text/babel" src="js/components/Planner.js"></script>
+  <script type="text/babel" src="js/components/Tracker.js"></script>
+  <script type="text/babel" src="js/components/Alerts.js"></script>
+  <script type="text/babel" src="js/components/Schedule.js"></script>
+  <script type="text/babel" src="js/components/Calculators.js"></script>
+  <script type="text/babel" src="js/components/Admin.js"></script>
+  <script type="text/babel" src="js/components/Blog.js"></script>
+  <script type="text/babel" src="js/components/Chat.js"></script>
+
+  <!-- Load Main Application Logic Last -->
+  <script type="text/babel" src="js/app.js"></script>
+</body>
+</html>

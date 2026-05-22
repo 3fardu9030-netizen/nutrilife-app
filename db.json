@@ -1,0 +1,55 @@
+{
+  "users": [
+    {
+      "id": "demo-user",
+      "name": "Alex Mercer",
+      "email": "alex@nutrilife.com",
+      "role": "user",
+      "streak": 5,
+      "xp": 560,
+      "weight": 70,
+      "height": 175,
+      "age": 28,
+      "gender": "Male",
+      "goal": "Weight Maintenance",
+      "lifestyle": "Moderately Active",
+      "allergies": [],
+      "conditions": []
+    }
+  ],
+  "habitLogs": [
+    {
+      "date": "2026-05-20",
+      "water": 6,
+      "calories": 1950,
+      "sleep": 7.5,
+      "exercise": 30
+    },
+    {
+      "date": "2026-05-21",
+      "water": 8,
+      "calories": 2100,
+      "sleep": 8,
+      "exercise": 45
+    },
+    {
+      "date": "2026-05-22",
+      "water": 3,
+      "calories": 2250,
+      "sleep": 6.8,
+      "exercise": 35
+    }
+  ],
+  "customFoods": [],
+  "blogs": [],
+  "comments": [
+    {
+      "id": 1,
+      "articleId": 1,
+      "author": "Sarah Connor",
+      "text": "This guide is incredibly clear! Implementing the overnight oats recipe tomorrow morning.",
+      "date": "2026-05-21"
+    }
+  ],
+  "healthAlerts": []
+}
