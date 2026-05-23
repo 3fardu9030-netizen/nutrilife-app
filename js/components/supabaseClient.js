@@ -1,9 +1,10 @@
-import { createClient } from '@supabase/supabase-js';
+// js/supabase.js
 
-// This is already your correct URL:
-const supabaseUrl = 'https://msabqzswtyujglgtjoum.supabase.co';
+const SUPABASE_URL = 'https://msabqzswtyujglgtjoum.supabase.co';
 
-// Copy and paste the long string from your 'anon / public' section here:
-const supabaseAnonKey = 'sb_publishable_3eU-k0n3yGHWC53T97PUmA_bBgwkb6Z'; 
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1zYXBxenhzdnR5dWpnbHBqb3VtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1MjU2NzgsImV4cCI6MjA5NTEwMTY3OH0.zyrHGssmoQqH5ZnlfFDVGxbAxGw9w3KBeKzvXkwnbfE';
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+window.supabaseClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+);

@@ -1,15 +1,16 @@
 const Calculators = () => {
-
+    
     // =========================
-    // SUPABASE CONFIG
+    // SUPABASE CLIENT
     // =========================
-    const supabaseUrl = 'https://msabqzswtyujglgtjoum.supabase.co';
-    const supabaseAnonKey = 'sb_publishable_3eU-kOn3yGHWC53T9ZPuMA_b8gwkb6Z';
-
-    const supabase = window.supabase.createClient(
-        supabaseUrl,
-        supabaseAnonKey
+    const supabase = window.supabaseClient;
+    if (!supabase) {
+    return (
+        <div className="p-10 text-red-500 text-center">
+            Supabase failed to load.
+        </div>
     );
+}
 
     // =========================
     // AUTH STATES
@@ -18,71 +19,6 @@ const Calculators = () => {
     const [authEmail, setAuthEmail] = React.useState('');
     const [authPassword, setAuthPassword] = React.useState('');
     const [authLoading, setAuthLoading] = React.useState(false);
-
-    // =========================
-    // LOGIN SESSION TRACKING
-    // =========================
-    React.useEffect(() => {
-
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setUser(session?.user ?? null);
-        });
-
-        const {
-            data: { subscription }
-        } = supabase.auth.onAuthStateChange((_event, session) => {
-            setUser(session?.user ?? null);
-        });
-
-        return () => {
-            subscription.unsubscribe();
-        };
-
-    }, []);
-
-    // =========================
-    // AUTH FUNCTIONS
-    // =========================
-
-    const handleSignUp = async (e) => {
-        e.preventDefault();
-
-        setAuthLoading(true);
-
-        const { error } = await supabase.auth.signUp({
-            email: authEmail,
-            password: authPassword
-        });
-
-        if (error) {
-            alert(error.message);
-        } else {
-            alert('Success! Check your email for verification.');
-        }
-
-        setAuthLoading(false);
-    };
-
-    const handleLogin = async (e) => {
-        e.preventDefault();
-
-        setAuthLoading(true);
-
-        const { error } = await supabase.auth.signInWithPassword({
-            email: authEmail,
-            password: authPassword
-        });
-
-        if (error) {
-            alert(error.message);
-        }
-
-        setAuthLoading(false);
-    };
-
-    const handleLogout = async () => {
-        await supabase.auth.signOut();
-    };
 
     // =========================
     // ACTIVE TAB
@@ -105,19 +41,139 @@ const Calculators = () => {
     });
 
     // =========================
+    // SESSION TRACKING
+    // =========================
+    React.useEffect(() => {
+
+        // Prevent crash if Supabase not loaded
+        if (!supabase) {
+            console.error('Supabase client not found');
+            return;
+        }
+
+        // Get existing session
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            setUser(session?.user ?? null);
+        });
+
+        // Listen for auth changes
+        const {
+            data: { subscription }
+        } = supabase.auth.onAuthStateChange((_event, session) => {
+            setUser(session?.user ?? null);
+        });
+
+        return () => {
+            subscription.unsubscribe();
+        };
+
+    }, [supabase]);
+
+    // =========================
     // INPUT HANDLER
     // =========================
     const handleInputChange = (key, value) => {
-        setInputs({
-            ...inputs,
+
+        setInputs(prev => ({
+            ...prev,
             [key]: value
-        });
+        }));
+
+    };
+
+    // =========================
+    // SIGN UP
+    // =========================
+    const handleSignUp = async () => {
+
+        if (!authEmail || !authPassword) {
+            alert('Please enter email and password');
+            return;
+        }
+
+        try {
+
+            setAuthLoading(true);
+
+            const { error } = await supabase.auth.signUp({
+                email: authEmail,
+                password: authPassword
+            });
+
+            if (error) {
+                alert(error.message);
+            } else {
+                alert('Signup successful! Check your email.');
+            }
+
+        } catch (err) {
+
+            console.error(err);
+            alert('Signup failed');
+
+        } finally {
+
+            setAuthLoading(false);
+
+        }
+    };
+
+    // =========================
+    // LOGIN
+    // =========================
+    const handleLogin = async () => {
+
+        if (!authEmail || !authPassword) {
+            alert('Please enter email and password');
+            return;
+        }
+
+        try {
+
+            setAuthLoading(true);
+
+            const { error } = await supabase.auth.signInWithPassword({
+                email: authEmail,
+                password: authPassword
+            });
+
+            if (error) {
+                alert(error.message);
+            }
+
+        } catch (err) {
+
+            console.error(err);
+            alert('Login failed');
+
+        } finally {
+
+            setAuthLoading(false);
+
+        }
+    };
+
+    // =========================
+    // LOGOUT
+    // =========================
+    const handleLogout = async () => {
+
+        try {
+            await supabase.auth.signOut();
+        } catch (err) {
+            console.error(err);
+        }
+
     };
 
     // =========================
     // BMI
     // =========================
     const bmi = React.useMemo(() => {
+
+        if (!inputs.height || !inputs.weight) {
+            return 0;
+        }
 
         const heightM = inputs.height / 100;
 
@@ -126,8 +182,11 @@ const Calculators = () => {
             (heightM * heightM)
         ).toFixed(1);
 
-    }, [inputs.weight, inputs.height]);
+    }, [inputs.height, inputs.weight]);
 
+    // =========================
+    // BMI STATUS
+    // =========================
     const bmiStatus = React.useMemo(() => {
 
         const val = parseFloat(bmi);
@@ -168,12 +227,15 @@ const Calculators = () => {
         let bmr = 0;
 
         if (inputs.gender === 'Male') {
+
             bmr =
                 10 * inputs.weight +
                 6.25 * inputs.height -
                 5 * inputs.age +
                 5;
+
         } else {
+
             bmr =
                 10 * inputs.weight +
                 6.25 * inputs.height -
@@ -208,45 +270,12 @@ const Calculators = () => {
     // WATER
     // =========================
     const waterTarget = React.useMemo(() => {
-        return ((inputs.weight * 0.035) + 0.4).toFixed(1);
+
+        return (
+            (inputs.weight * 0.035) + 0.4
+        ).toFixed(1);
+
     }, [inputs.weight]);
-
-    // =========================
-    // BODY FAT
-    // =========================
-    const bodyFat = React.useMemo(() => {
-
-        const h = inputs.height / 2.54;
-        const w = inputs.waist / 2.54;
-        const n = inputs.neck / 2.54;
-        const hip = inputs.hip / 2.54;
-
-        try {
-
-            if (inputs.gender === 'Male') {
-
-                const val =
-                    86.01 * Math.log10(w - n) -
-                    70.041 * Math.log10(h) +
-                    36.76;
-
-                return val.toFixed(1);
-
-            } else {
-
-                const val =
-                    163.205 * Math.log10(w + hip - n) -
-                    97.684 * Math.log10(h) -
-                    78.387;
-
-                return val.toFixed(1);
-            }
-
-        } catch {
-            return 20;
-        }
-
-    }, [inputs]);
 
     // =========================
     // PROTEIN
@@ -268,6 +297,46 @@ const Calculators = () => {
         );
 
     }, [inputs.weight, inputs.activity]);
+
+    // =========================
+    // BODY FAT
+    // =========================
+    const bodyFat = React.useMemo(() => {
+
+        try {
+
+            const h = inputs.height / 2.54;
+            const w = inputs.waist / 2.54;
+            const n = inputs.neck / 2.54;
+            const hip = inputs.hip / 2.54;
+
+            if (inputs.gender === 'Male') {
+
+                const val =
+                    86.01 * Math.log10(w - n) -
+                    70.041 * Math.log10(h) +
+                    36.76;
+
+                return val.toFixed(1);
+
+            } else {
+
+                const val =
+                    163.205 * Math.log10(w + hip - n) -
+                    97.684 * Math.log10(h) -
+                    78.387;
+
+                return val.toFixed(1);
+
+            }
+
+        } catch {
+
+            return '0';
+
+        }
+
+    }, [inputs]);
 
     // =========================
     // UI
@@ -309,7 +378,7 @@ const Calculators = () => {
                                 disabled={authLoading}
                                 className="flex-1 bg-blue-600 text-white p-2 rounded"
                             >
-                                Login
+                                {authLoading ? 'Loading...' : 'Login'}
                             </button>
 
                             <button
@@ -347,7 +416,7 @@ const Calculators = () => {
 
                     </div>
 
-                    {/* TAB BAR */}
+                    {/* TABS */}
                     <div className="flex gap-2 flex-wrap">
 
                         {['bmi', 'calorie', 'water', 'protein', 'fat'].map((tab) => (
@@ -368,7 +437,7 @@ const Calculators = () => {
 
                     </div>
 
-                    {/* MAIN CONTENT */}
+                    {/* CONTENT */}
                     <div className="grid lg:grid-cols-2 gap-6">
 
                         {/* INPUTS */}
@@ -380,27 +449,27 @@ const Calculators = () => {
 
                             <input
                                 type="number"
+                                placeholder="Height (cm)"
                                 value={inputs.height}
                                 onChange={(e) =>
                                     handleInputChange(
                                         'height',
-                                        parseFloat(e.target.value)
+                                        parseFloat(e.target.value) || 0
                                     )
                                 }
-                                placeholder="Height"
                                 className="w-full border p-2 rounded"
                             />
 
                             <input
                                 type="number"
+                                placeholder="Weight (kg)"
                                 value={inputs.weight}
                                 onChange={(e) =>
                                     handleInputChange(
                                         'weight',
-                                        parseFloat(e.target.value)
+                                        parseFloat(e.target.value) || 0
                                     )
                                 }
-                                placeholder="Weight"
                                 className="w-full border p-2 rounded"
                             />
 
@@ -411,6 +480,7 @@ const Calculators = () => {
 
                             {activeTab === 'bmi' && (
                                 <div>
+
                                     <h2 className="text-3xl font-bold">
                                         BMI: {bmi}
                                     </h2>
@@ -420,39 +490,32 @@ const Calculators = () => {
                                     >
                                         {bmiStatus.name}
                                     </p>
+
                                 </div>
                             )}
 
                             {activeTab === 'calorie' && (
-                                <div>
-                                    <h2 className="text-3xl font-bold">
-                                        {calorieTarget} kcal/day
-                                    </h2>
-                                </div>
+                                <h2 className="text-3xl font-bold">
+                                    {calorieTarget} kcal/day
+                                </h2>
                             )}
 
                             {activeTab === 'water' && (
-                                <div>
-                                    <h2 className="text-3xl font-bold">
-                                        {waterTarget} Liters/day
-                                    </h2>
-                                </div>
+                                <h2 className="text-3xl font-bold">
+                                    {waterTarget} Liters/day
+                                </h2>
                             )}
 
                             {activeTab === 'protein' && (
-                                <div>
-                                    <h2 className="text-3xl font-bold">
-                                        {proteinTarget}g Protein/day
-                                    </h2>
-                                </div>
+                                <h2 className="text-3xl font-bold">
+                                    {proteinTarget}g Protein/day
+                                </h2>
                             )}
 
                             {activeTab === 'fat' && (
-                                <div>
-                                    <h2 className="text-3xl font-bold">
-                                        {bodyFat}% Body Fat
-                                    </h2>
-                                </div>
+                                <h2 className="text-3xl font-bold">
+                                    {bodyFat}% Body Fat
+                                </h2>
                             )}
 
                         </div>
