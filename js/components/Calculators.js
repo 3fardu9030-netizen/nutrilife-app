@@ -1,16 +1,17 @@
 const Calculators = () => {
-    
+
     // =========================
     // SUPABASE CLIENT
     // =========================
     const supabase = window.supabaseClient;
+
     if (!supabase) {
-    return (
-        <div className="p-10 text-red-500 text-center">
-            Supabase failed to load.
-        </div>
-    );
-}
+        return (
+            <div className="p-10 text-red-500 text-center">
+                Supabase failed to load.
+            </div>
+        );
+    }
 
     // =========================
     // AUTH STATES
@@ -45,18 +46,15 @@ const Calculators = () => {
     // =========================
     React.useEffect(() => {
 
-        // Prevent crash if Supabase not loaded
         if (!supabase) {
             console.error('Supabase client not found');
             return;
         }
 
-        // Get existing session
         supabase.auth.getSession().then(({ data: { session } }) => {
             setUser(session?.user ?? null);
         });
 
-        // Listen for auth changes
         const {
             data: { subscription }
         } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -374,6 +372,7 @@ const Calculators = () => {
                         <div className="flex gap-3">
 
                             <button
+                                type="button"
                                 onClick={handleLogin}
                                 disabled={authLoading}
                                 className="flex-1 bg-blue-600 text-white p-2 rounded"
@@ -382,6 +381,7 @@ const Calculators = () => {
                             </button>
 
                             <button
+                                type="button"
                                 onClick={handleSignUp}
                                 disabled={authLoading}
                                 className="flex-1 bg-green-600 text-white p-2 rounded"
@@ -408,6 +408,7 @@ const Calculators = () => {
                         </div>
 
                         <button
+                            type="button"
                             onClick={handleLogout}
                             className="bg-red-500 text-white px-4 py-2 rounded"
                         >
@@ -423,6 +424,7 @@ const Calculators = () => {
 
                             <button
                                 key={tab}
+                                type="button"
                                 onClick={() => setActiveTab(tab)}
                                 className={`px-4 py-2 rounded font-bold ${
                                     activeTab === tab
@@ -447,31 +449,192 @@ const Calculators = () => {
                                 Parameters
                             </h2>
 
-                            <input
-                                type="number"
-                                placeholder="Height (cm)"
-                                value={inputs.height}
-                                onChange={(e) =>
-                                    handleInputChange(
-                                        'height',
-                                        parseFloat(e.target.value) || 0
-                                    )
-                                }
-                                className="w-full border p-2 rounded"
-                            />
+                            {/* HEIGHT */}
+                            <div>
+                                <label className="block font-semibold mb-1">
+                                    Height (cm)
+                                </label>
 
-                            <input
-                                type="number"
-                                placeholder="Weight (kg)"
-                                value={inputs.weight}
-                                onChange={(e) =>
-                                    handleInputChange(
-                                        'weight',
-                                        parseFloat(e.target.value) || 0
-                                    )
-                                }
-                                className="w-full border p-2 rounded"
-                            />
+                                <input
+                                    type="number"
+                                    value={inputs.height}
+                                    onChange={(e) =>
+                                        handleInputChange(
+                                            'height',
+                                            parseFloat(e.target.value) || 0
+                                        )
+                                    }
+                                    className="w-full border p-2 rounded"
+                                    placeholder="Enter height"
+                                />
+                            </div>
+
+                            {/* WEIGHT */}
+                            <div>
+                                <label className="block font-semibold mb-1">
+                                    Weight (kg)
+                                </label>
+
+                                <input
+                                    type="number"
+                                    value={inputs.weight}
+                                    onChange={(e) =>
+                                        handleInputChange(
+                                            'weight',
+                                            parseFloat(e.target.value) || 0
+                                        )
+                                    }
+                                    className="w-full border p-2 rounded"
+                                    placeholder="Enter weight"
+                                />
+                            </div>
+
+                            {/* AGE */}
+                            <div>
+                                <label className="block font-semibold mb-1">
+                                    Age
+                                </label>
+
+                                <input
+                                    type="number"
+                                    value={inputs.age}
+                                    onChange={(e) =>
+                                        handleInputChange(
+                                            'age',
+                                            parseFloat(e.target.value) || 0
+                                        )
+                                    }
+                                    className="w-full border p-2 rounded"
+                                    placeholder="Enter age"
+                                />
+                            </div>
+
+                            {/* GENDER */}
+                            <div>
+                                <label className="block font-semibold mb-1">
+                                    Gender
+                                </label>
+
+                                <select
+                                    value={inputs.gender}
+                                    onChange={(e) =>
+                                        handleInputChange(
+                                            'gender',
+                                            e.target.value
+                                        )
+                                    }
+                                    className="w-full border p-2 rounded"
+                                >
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                </select>
+                            </div>
+
+                            {/* ACTIVITY */}
+                            <div>
+                                <label className="block font-semibold mb-1">
+                                    Activity Level
+                                </label>
+
+                                <select
+                                    value={inputs.activity}
+                                    onChange={(e) =>
+                                        handleInputChange(
+                                            'activity',
+                                            e.target.value
+                                        )
+                                    }
+                                    className="w-full border p-2 rounded"
+                                >
+                                    <option>Sedentary</option>
+                                    <option>Lightly Active</option>
+                                    <option>Moderately Active</option>
+                                    <option>Very Active</option>
+                                </select>
+                            </div>
+
+                            {/* GOAL */}
+                            <div>
+                                <label className="block font-semibold mb-1">
+                                    Goal
+                                </label>
+
+                                <select
+                                    value={inputs.goal}
+                                    onChange={(e) =>
+                                        handleInputChange(
+                                            'goal',
+                                            e.target.value
+                                        )
+                                    }
+                                    className="w-full border p-2 rounded"
+                                >
+                                    <option value="Loss">Weight Loss</option>
+                                    <option value="Maintenance">Maintenance</option>
+                                    <option value="Gain">Weight Gain</option>
+                                </select>
+                            </div>
+
+                            {/* BODY FAT EXTRA FIELDS */}
+                            {activeTab === 'fat' && (
+                                <>
+                                    <div>
+                                        <label className="block font-semibold mb-1">
+                                            Neck (cm)
+                                        </label>
+
+                                        <input
+                                            type="number"
+                                            value={inputs.neck}
+                                            onChange={(e) =>
+                                                handleInputChange(
+                                                    'neck',
+                                                    parseFloat(e.target.value) || 0
+                                                )
+                                            }
+                                            className="w-full border p-2 rounded"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block font-semibold mb-1">
+                                            Waist (cm)
+                                        </label>
+
+                                        <input
+                                            type="number"
+                                            value={inputs.waist}
+                                            onChange={(e) =>
+                                                handleInputChange(
+                                                    'waist',
+                                                    parseFloat(e.target.value) || 0
+                                                )
+                                            }
+                                            className="w-full border p-2 rounded"
+                                        />
+                                    </div>
+
+                                    {inputs.gender === 'Female' && (
+                                        <div>
+                                            <label className="block font-semibold mb-1">
+                                                Hip (cm)
+                                            </label>
+
+                                            <input
+                                                type="number"
+                                                value={inputs.hip}
+                                                onChange={(e) =>
+                                                    handleInputChange(
+                                                        'hip',
+                                                        parseFloat(e.target.value) || 0
+                                                    )
+                                                }
+                                                className="w-full border p-2 rounded"
+                                            />
+                                        </div>
+                                    )}
+                                </>
+                            )}
 
                         </div>
 
