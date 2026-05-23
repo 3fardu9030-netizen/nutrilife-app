@@ -1,5 +1,52 @@
 // NutriLife Health Calculators Suite
 window.Calculators = function () {
+  // === 1. INITIALIZE SUPABASE CLIENT GLOBALLY ===
+    const supabaseUrl = 'https://msabqzswtyujglgtjoum.supabase.co';
+    const supabaseAnonKey = 'sb_publishable_3eU-kOn3yGHWC53T9ZPuMA_b8gwkb6Z';
+    const supabase = supabaseClient.createClient(supabaseUrl, supabaseAnonKey);
+
+    // === 2. AUTHENTICATION STATES ===
+    const [user, setUser] = React.useState(null);
+    const [authEmail, setAuthEmail] = React.useState('');
+    const [authPassword, setAuthPassword] = React.useState('');
+    const [authLoading, setAuthLoading] = React.useState(false);
+
+    // === 3. DYNAMIC LOGIN SESSION TRACKING ===
+    React.useEffect(() => {
+        // Check if a user is already signed in when the page loads
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            setUser(session?.user ?? null);
+        });
+
+        // Watch for active login or logout events
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            setUser(session?.user ?? null);
+        });
+
+        return () => subscription.unsubscribe();
+    }, []);
+
+    // === 4. AUTH ACTION FUNCTIONS ===
+    const handleSignUp = async (e) => {
+        e.preventDefault();
+        setAuthLoading(true);
+        const { error } = await supabase.auth.signUp({ email: authEmail, password: authPassword });
+        if (error) alert(error.message);
+        else alert('Success! Check your email for a verification link!');
+        setAuthLoading(false);
+    };
+
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        setAuthLoading(true);
+        const { error } = await supabase.auth.signInWithPassword({ email: authEmail, password: authPassword });
+        if (error) alert(error.message);
+        setAuthLoading(false);
+    };
+
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+    };
   const [activeTab, setActiveTab] = React.useState('bmi');
 
   // Unified State for calculators
@@ -94,7 +141,55 @@ window.Calculators = function () {
   }, [inputs.weight, inputs.activity]);
 
   return (
-    <div className="space-y-8 page-transition">
+        <div className="min-h-screen bg-slate-50 p-4">
+            {!user ? (
+                /* --- SHOW THIS LOG-IN SCREEN IF SIGNED OUT --- */
+                <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded-xl shadow-md font-sans">
+                    <h2 className="text-2xl font-bold mb-6 text-center text-slate-800">NutriLife Account</h2>
+                    <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-slate-600 mb-1">Email</label>
+                          <input 
+                            type="email" 
+                            value={authEmail} 
+                            onChange={(e) => setAuthEmail(e.target.value)} 
+                            className="w-full border p-2 rounded text-slate-900 bg-slate-50" 
+                            placeholder="name@email.com"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-slate-600 mb-1">Password</label>
+                          <input 
+                            type="password" 
+                            value={authPassword} 
+                            onChange={(e) => setAuthPassword(e.target.value)} 
+                            className="w-full border p-2 rounded text-slate-900 bg-slate-50" 
+                            placeholder="••••••••"
+                          />
+                        </div>
+                        <div className="flex space-x-3 pt-2">
+                          <button onClick={handleLogin} disabled={authLoading} className="w-1/2 bg-blue-600 text-white p-2 rounded font-semibold hover:bg-blue-700 transition">
+                            {authLoading ? 'Loading...' : 'Log In'}
+                          </button>
+                          <button onClick={handleSignUp} disabled={authLoading} className="w-1/2 bg-slate-200 text-slate-700 p-2 rounded font-semibold hover:bg-slate-300 transition">
+                            Sign Up
+                          </button>
+                        </div>
+                    </div>
+                </div>
+            ) : (
+                /* --- SHOW THIS IF THE USER SUCCESSFULLY LOGS IN --- */
+                <div>
+                    {/* Logged in status banner */}
+                    <div className="flex justify-between items-center mb-4 bg-white p-3 rounded-lg shadow-sm max-w-4xl mx-auto">
+                        <span className="text-sm text-slate-600">Logged in as: <strong className="text-slate-800">{user.email}</strong></span>
+                        <button onClick={handleLogout} className="text-xs bg-red-100 text-red-600 px-3 py-1 rounded font-semibold hover:bg-red-200 transition">
+                            Logout
+                        </button>
+                    </div>
+
+                    {/* This restores your original container structure seamlessly */}
+                    <div className="space-y-8 page-transition">
       {/* Title Header */}
       <div className="border-b border-slate-100 dark:border-slate-800/80 pb-6">
         <h1 className="text-3xl font-extrabold tracking-tight text-slate-800 dark:text-white font-sans">
@@ -434,5 +529,9 @@ window.Calculators = function () {
       </div>
 
     </div>
-  );
+  </div> {/* Closes space-y-8 container */}
+                </div> {/* Closes logged-in wrapper */}
+            )} {/* Closes !user conditional wrapper */}
+        </div> {/* Closes root min-h-screen container */}
+    );
 };
