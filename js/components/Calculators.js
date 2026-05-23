@@ -16,7 +16,8 @@ window.Calculators = function () {
   });
 
   const handleInputChange = (key, val) => {
-    setInputs({ ...inputs, [key]: val });
+    const sanitizedVal =val === ""?"" : val;
+    setInputs({ ...inputs, [key]: sanitizedVal });
   };
 
   // BMI CALCULATOR OUTPUTS
@@ -125,7 +126,7 @@ window.Calculators = function () {
                 min="120"
                 max="220"
                 value={inputs.height}
-                onChange={(e) => handleInputChange('height', parseInt(e.target.value))}
+                onChange={(e) => handleInputChange('height', e.target.value === ""?"" : parseInt(e.target.value))}
                 className="custom-slider"
               />
             </div>
@@ -141,7 +142,7 @@ window.Calculators = function () {
                 min="40"
                 max="150"
                 value={inputs.weight}
-                onChange={(e) => handleInputChange('weight', parseInt(e.target.value))}
+                onChange={(e) => handleInputChange('weight', e.target.value === ""?"" : parseFloat(e.target.value))}
                 className="custom-slider"
               />
             </div>
@@ -153,7 +154,7 @@ window.Calculators = function () {
                 <input
                   type="number"
                   value={inputs.age}
-                  onChange={(e) => handleInputChange('age', parseInt(e.target.value) || 28)}
+                  onChange={(e) => handleInputChange('age', e.target.value === ""?"" : parseInt(e.target.value) || 28)}
                   className="w-full px-3 py-2 glass-input border border-slate-200 dark:border-slate-805"
                 />
               </div>
@@ -161,7 +162,7 @@ window.Calculators = function () {
                 <label className="font-bold text-slate-500">Gender</label>
                 <select
                   value={inputs.gender}
-                  onChange={(e) => handleInputChange('gender', e.target.value)}
+                  onChange={(e) => handleInputChange('gender', e.target.value === ""?"" : e.target.value)}
                   className="w-full px-3 py-2 glass-input border border-slate-200 dark:border-slate-805 bg-transparent dark:bg-slate-900"
                 >
                   <option value="Male">Male</option>
@@ -195,7 +196,7 @@ window.Calculators = function () {
                     <input
                       type="number"
                       value={inputs.neck}
-                      onChange={(e) => handleInputChange('neck', parseFloat(e.target.value) || 38)}
+                      onChange={(e) => handleInputChange('neck', e.target.value === ""?"" : parseFloat(e.target.value) || 38)}
                       className="w-full px-2 py-1.5 glass-input border text-center text-xs"
                     />
                   </div>
@@ -204,7 +205,7 @@ window.Calculators = function () {
                     <input
                       type="number"
                       value={inputs.waist}
-                      onChange={(e) => handleInputChange('waist', parseFloat(e.target.value) || 84)}
+                      onChange={(e) => handleInputChange('waist', e.target.value === ""?"" : parseFloat(e.target.value) || 84)}
                       className="w-full px-2 py-1.5 glass-input border text-center text-xs"
                     />
                   </div>
@@ -214,7 +215,7 @@ window.Calculators = function () {
                       <input
                         type="number"
                         value={inputs.hip}
-                        onChange={(e) => handleInputChange('hip', parseFloat(e.target.value) || 94)}
+                        onChange={(e) => handleInputChange('hip', e.target.value === ""?"" : parseFloat(e.target.value) || 94)}
                         className="w-full px-2 py-1.5 glass-input border text-center text-xs"
                       />
                     </div>
