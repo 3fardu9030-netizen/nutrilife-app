@@ -30,14 +30,14 @@ const Calculators = () => {
     // INPUT STATES
     // =========================
     const [inputs, setInputs] = React.useState({
-        weight: 70,
-        height: 175,
-        age: 28,
+        weight: '',
+        height: '',
+        age: '',
         gender: 'Male',
         activity: 'Moderately Active',
-        neck: 38,
-        waist: 84,
-        hip: 94,
+        neck: '',
+        waist: '',
+        hip: '',
         goal: 'Maintenance'
     });
 
@@ -222,6 +222,14 @@ const Calculators = () => {
     // =========================
     const calorieTarget = React.useMemo(() => {
 
+        if (
+            !inputs.weight ||
+            !inputs.height ||
+            !inputs.age
+        ) {
+            return 0;
+        }
+
         let bmr = 0;
 
         if (inputs.gender === 'Male') {
@@ -269,6 +277,10 @@ const Calculators = () => {
     // =========================
     const waterTarget = React.useMemo(() => {
 
+        if (!inputs.weight) {
+            return 0;
+        }
+
         return (
             (inputs.weight * 0.035) + 0.4
         ).toFixed(1);
@@ -279,6 +291,10 @@ const Calculators = () => {
     // PROTEIN
     // =========================
     const proteinTarget = React.useMemo(() => {
+
+        if (!inputs.weight) {
+            return 0;
+        }
 
         let multiplier = 1.2;
 
@@ -303,6 +319,14 @@ const Calculators = () => {
 
         try {
 
+            if (
+                !inputs.height ||
+                !inputs.waist ||
+                !inputs.neck
+            ) {
+                return 0;
+            }
+
             const h = inputs.height / 2.54;
             const w = inputs.waist / 2.54;
             const n = inputs.neck / 2.54;
@@ -318,6 +342,10 @@ const Calculators = () => {
                 return val.toFixed(1);
 
             } else {
+
+                if (!inputs.hip) {
+                    return 0;
+                }
 
                 const val =
                     163.205 * Math.log10(w + hip - n) -
@@ -461,7 +489,9 @@ const Calculators = () => {
                                     onChange={(e) =>
                                         handleInputChange(
                                             'height',
-                                            parseFloat(e.target.value) || 0
+                                            e.target.value === ''
+                                                ? ''
+                                                : parseFloat(e.target.value)
                                         )
                                     }
                                     className="w-full border p-2 rounded"
@@ -481,7 +511,9 @@ const Calculators = () => {
                                     onChange={(e) =>
                                         handleInputChange(
                                             'weight',
-                                            parseFloat(e.target.value) || 0
+                                            e.target.value === ''
+                                                ? ''
+                                                : parseFloat(e.target.value)
                                         )
                                     }
                                     className="w-full border p-2 rounded"
@@ -501,7 +533,9 @@ const Calculators = () => {
                                     onChange={(e) =>
                                         handleInputChange(
                                             'age',
-                                            parseFloat(e.target.value) || 0
+                                            e.target.value === ''
+                                                ? ''
+                                                : parseFloat(e.target.value)
                                         )
                                     }
                                     className="w-full border p-2 rounded"
@@ -575,7 +609,7 @@ const Calculators = () => {
                                 </select>
                             </div>
 
-                            {/* BODY FAT EXTRA FIELDS */}
+                            {/* BODY FAT EXTRA INPUTS */}
                             {activeTab === 'fat' && (
                                 <>
                                     <div>
@@ -589,7 +623,9 @@ const Calculators = () => {
                                             onChange={(e) =>
                                                 handleInputChange(
                                                     'neck',
-                                                    parseFloat(e.target.value) || 0
+                                                    e.target.value === ''
+                                                        ? ''
+                                                        : parseFloat(e.target.value)
                                                 )
                                             }
                                             className="w-full border p-2 rounded"
@@ -607,7 +643,9 @@ const Calculators = () => {
                                             onChange={(e) =>
                                                 handleInputChange(
                                                     'waist',
-                                                    parseFloat(e.target.value) || 0
+                                                    e.target.value === ''
+                                                        ? ''
+                                                        : parseFloat(e.target.value)
                                                 )
                                             }
                                             className="w-full border p-2 rounded"
@@ -626,7 +664,9 @@ const Calculators = () => {
                                                 onChange={(e) =>
                                                     handleInputChange(
                                                         'hip',
-                                                        parseFloat(e.target.value) || 0
+                                                        e.target.value === ''
+                                                            ? ''
+                                                            : parseFloat(e.target.value)
                                                     )
                                                 }
                                                 className="w-full border p-2 rounded"
