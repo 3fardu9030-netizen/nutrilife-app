@@ -3,7 +3,7 @@ window.Calculators = function () {
   // === 1. INITIALIZE SUPABASE CLIENT GLOBALLY ===
     const supabaseUrl = 'https://msabqzswtyujglgtjoum.supabase.co';
     const supabaseAnonKey = 'sb_publishable_3eU-kOn3yGHWC53T9ZPuMA_b8gwkb6Z';
-    const supabase = supabaseClient.createClient(supabaseUrl, supabaseAnonKey);
+    const supabase= window.supabase.createClient(supabaseUrl, supabaseAnonKey);
 
     // === 2. AUTHENTICATION STATES ===
     const [user, setUser] = React.useState(null);
