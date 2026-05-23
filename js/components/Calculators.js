@@ -513,25 +513,18 @@ window.Calculators = function () {
 
               <div className="grid grid-cols-2 gap-4 text-xs">
                 <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border">
-                  <p className="font-bold text-slate-400">Lean Body Mass</p>
-                  <p className="text-base font-black text-slate-700 dark:text-slate-100">{((1 - (bodyFat / 100)) * inputs.weight).toFixed(1)} kg</p>
+                            <p className="font-bold text-slate-400">Lean Body Mass</p>
+                            <p className="text-base font-black text-slate-700 dark:text-slate-100">{((1 - (bodyFat / 100)) * inputs.weight).toFixed(1)} kg</p>
+                        </div>
+                        <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border">
+                            <p className="font-bold text-slate-400">Fat Body Mass</p>
+                            <p className="text-base font-black text-red-500">{((bodyFat / 100) * inputs.weight).toFixed(1)} kg</p>
+                        </div>
+                    </div> 
                 </div>
-                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border">
-                  <p className="font-bold text-slate-400">Fat Body Mass</p>
-                  <p className="text-base font-black text-red-500">{((bodyFat / 100) * inputs.weight).toFixed(1)} kg</p>
-                </div>
-              </div>
-            </div>
-          )}
-
+            )}
         </div>
-
-      </div>
-
-    </div>
-  </div> {/* Closes space-y-8 container */}
-                </div> {/* Closes logged-in wrapper */}
-            )} {/* Closes !user conditional wrapper */}
-        </div> {/* Closes root min-h-screen container */}
     );
 };
+
+export default Calculators;
