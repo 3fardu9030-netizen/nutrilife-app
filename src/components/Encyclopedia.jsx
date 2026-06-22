@@ -1,10 +1,11 @@
-// NutriLife Food Encyclopedia Component (ES MODULE VIA BABEL)
+// src/components/Encyclopedia.jsx
+import React, { useState, useEffect } from "react";
 
- function Encyclopedia() {
-  const [searchTerm, setSearchTerm] = React.useState("");
-  const [selectedCategory, setSelectedCategory] = React.useState("All");
-  const [selectedFood, setSelectedFood] = React.useState(null);
-  const [voiceListening, setVoiceListening] = React.useState(false);
+function Encyclopedia() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedFood, setSelectedFood] = useState(null);
+  const [voiceListening, setVoiceListening] = useState(false);
 
   const categories = [
     "All",
@@ -18,7 +19,7 @@
     "Superfoods"
   ];
 
-  // Robust mock matrix data fallback if asynchronous database hasn't loaded immediately
+  // Robust fallback dataset matrix
   const allFoods = window.NutritionData?.foods || [
     {
       id: "avocado",
@@ -59,15 +60,16 @@
   ];
 
   // RENDERING THE MACRONUTRIENT CHART MATRIX
-  React.useEffect(() => {
+  useEffect(() => {
     if (selectedFood) {
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         const chartDom = document.querySelector("#macro-donut-chart");
 
         if (chartDom && window.ApexCharts) {
           chartDom.innerHTML = "";
 
-          const chart = new ApexCharts(chartDom, {
+          const isDark = document.documentElement.classList.contains("dark");
+          const chart = new window.ApexCharts(chartDom, {
             series: [
               Number(selectedFood.protein) || 0,
               Number(selectedFood.carbs) || 0,
@@ -76,13 +78,14 @@
             labels: ["Protein (g)", "Carbs (g)", "Fats (g)"],
             chart: {
               type: "donut",
-              height: 220
+              height: 220,
+              background: "transparent text"
             },
             colors: ["#3b82f6", "#f59e0b", "#10b981"],
             legend: {
               position: "bottom",
               labels: {
-                colors: document.documentElement.classList.contains("dark") ? "#cbd5e1" : "#334155"
+                colors: isDark ? "#cbd5e1" : "#334155"
               }
             },
             dataLabels: {
@@ -96,6 +99,8 @@
           chart.render();
         }
       }, 120);
+
+      return () => clearTimeout(timer);
     }
   }, [selectedFood]);
 
@@ -158,7 +163,7 @@
         <input
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Search items by name, isolated target micro-nutrients or physical health benefits..."
+          placeholder="Search items by name, micro-nutrients or health benefits..."
           className="w-full border dark:border-slate-800 rounded-2xl pl-11 pr-12 py-3 bg-white dark:bg-slate-900 text-slate-800 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 shadow-sm"
         />
         <button
@@ -211,6 +216,7 @@
                     src={food.image}
                     alt={food.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                    loading="lazy"
                   />
                 </div>
                 <div className="p-5 space-y-2">
@@ -265,38 +271,44 @@
             </div>
 
             {/* METABOLIC BENEFIT RECAPS */}
-            <div className="space-y-2">
-              <h3 className="font-bold text-sm text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                <i className="fa-solid fa-circle-nodes text-emerald-500"></i> Metabolic Path Benefits
-              </h3>
-              <ul className="text-xs text-slate-600 dark:text-slate-400 space-y-1.5 pl-1">
-                {selectedFood.benefits?.map((b, i) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <i className="fa-solid fa-square-check text-emerald-500 mt-0.5"></i> <span>{b}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {selectedFood.benefits && selectedFood.benefits.length > 0 && (
+              <div className="space-y-2">
+                <h3 className="font-bold text-sm text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                  <i className="fa-solid fa-circle-nodes text-emerald-500"></i> Metabolic Path Benefits
+                </h3>
+                <ul className="text-xs text-slate-600 dark:text-slate-400 space-y-1.5 pl-1">
+                  {selectedFood.benefits?.map((b, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <i className="fa-solid fa-square-check text-emerald-500 mt-0.5"></i> <span>{b}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             {/* MICRONUTRIENT ALLOCATIONS */}
-            <div className="space-y-2.5">
-              <h3 className="font-bold text-sm text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                <i className="fa-solid fa-vial text-blue-500"></i> Micro-Nutrients & Vitamins
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {selectedFood.vitamins?.map((v, i) => (
-                  <span
-                    key={i}
-                    className="px-3 py-1.5 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 text-xs font-semibold rounded-xl"
-                  >
-                    ✨ {v}
-                  </span>
-                ))}
+            {selectedFood.vitamins && selectedFood.vitamins.length > 0 && (
+              <div className="space-y-2.5">
+                <h3 className="font-bold text-sm text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                  <i className="fa-solid fa-vial text-blue-500"></i> Micro-Nutrients & Vitamins
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {selectedFood.vitamins?.map((v, i) => (
+                    <span
+                      key={i}
+                      className="px-3 py-1.5 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 text-xs font-semibold rounded-xl"
+                    >
+                      ✨ {v}
+                    </span>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       )}
     </div>
   );
 }
+
+export default Encyclopedia;

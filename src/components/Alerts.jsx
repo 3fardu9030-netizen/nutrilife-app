@@ -1,8 +1,11 @@
-// NutriLife Health Alerts Component (ES MODULE VIA BABEL)
+// src/components/Alerts.jsx
+import React, { useState } from "react";
+// ✅ Corrected Named Import from the refactored modular dataset
+import { NutritionData } from "../lib/nutritionData";
 
- function Alerts() {
-  // Use global data if available, or fall back to an empty array to prevent crash
-  const alertsData = window.NutritionData?.healthAlerts || [
+function Alerts() {
+  // ✅ Corrected: Safely pull datasets directly from the imported ES Module reference
+  const alertsData = NutritionData?.healthAlerts || [
     {
       id: "obesity",
       name: "Obesity Management",
@@ -18,7 +21,7 @@
     }
   ];
 
-  const [activeAlertId, setActiveAlertId] = React.useState(
+  const [activeAlertId, setActiveAlertId] = useState(
     alertsData[0] ? alertsData[0].id : "obesity"
   );
 
@@ -173,3 +176,5 @@
     </div>
   );
 }
+
+export default Alerts;

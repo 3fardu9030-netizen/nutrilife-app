@@ -1,8 +1,9 @@
-// NutriLife AI Nutrition Assistant Widget Component (ES MODULE VIA BABEL)
+// src/components/Chat.jsx
+import React, { useState, useEffect, useRef } from "react";
 
- function Chat() {
-  const [isOpen, setIsOpen] = React.useState(false);
-  const [messages, setMessages] = React.useState([
+function Chat() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [messages, setMessages] = useState([
     {
       id: 1,
       sender: "bot",
@@ -11,11 +12,11 @@
     }
   ]);
 
-  const [inputText, setInputText] = React.useState("");
-  const [loading, setLoading] = React.useState(false);
-  const messagesEndRef = React.useRef(null);
+  const [inputText, setInputText] = useState("");
+  const [loading, setLoading] = useState(false);
+  const messagesEndRef = useRef(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({
         behavior: "smooth"
@@ -24,8 +25,11 @@
   }, [messages, isOpen]);
 
   const handleSendMessage = async (textToSend) => {
+    // ✅ Corrected: Safely extract current context and evaluate against trimmed variations
     const text = textToSend || inputText;
-    if (!text.trim()) return;
+    if (!text || !text.trim() || loading) return;
+
+    const currentText = text.trim();
 
     const timestamp = new Date().toLocaleTimeString([], {
       hour: "2-digit",
@@ -35,10 +39,11 @@
     const userMsg = {
       id: Date.now(),
       sender: "user",
-      text: text,
+      text: currentText,
       timestamp: timestamp
     };
 
+    // Clean out text inputs immediately to prevent double submissions
     setMessages(prev => [...prev, userMsg]);
     setInputText("");
     setLoading(true);
@@ -49,8 +54,12 @@
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ message: text })
+        body: JSON.stringify({ message: currentText })
       });
+
+      if (!response.ok) {
+        throw new Error("Server infrastructure response mismatch");
+      }
 
       const data = await response.json();
 
@@ -66,7 +75,7 @@
 
       setMessages(prev => [...prev, botMsg]);
     } catch (error) {
-      console.error(error);
+      console.error("AI Communication Failure:", error);
       setMessages(prev => [
         ...prev,
         {
@@ -84,8 +93,12 @@
     }
   };
 
+  // ✅ Corrected: Added structural loading and emptiness checks to prevent enter-key spamming
   const handleKeyPress = (e) => {
-    if (e.key === "Enter") handleSendMessage();
+    if (e.key === "Enter" && !loading && inputText.trim()) {
+      e.preventDefault();
+      handleSendMessage();
+    }
   };
 
   const suggestedQuestions = [
@@ -162,8 +175,9 @@
             {suggestedQuestions.map((q, index) => (
               <button
                 key={index}
+                disabled={loading}
                 onClick={() => handleSendMessage(q)}
-                className="text-[11px] border border-slate-200 dark:border-slate-800 hover:border-emerald-500 dark:hover:border-emerald-500 rounded-xl px-3 py-1.5 bg-slate-50 dark:bg-slate-800/40 text-slate-600 dark:text-slate-400 hover:text-emerald-500 transition shrink-0"
+                className="text-[11px] border border-slate-200 dark:border-slate-800 hover:border-emerald-500 dark:hover:border-emerald-500 rounded-xl px-3 py-1.5 bg-slate-50 dark:bg-slate-800/40 text-slate-600 dark:text-slate-400 hover:text-emerald-500 transition shrink-0 disabled:opacity-50"
               >
                 {q}
               </button>
@@ -193,3 +207,5 @@
     </>
   );
 }
+
+export default Chat;

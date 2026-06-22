@@ -1,7 +1,8 @@
 
-// NutriLife Header/Navbar Component (ES MODULE VIA BABEL)
+// src/components/Navbar.jsx
+import React, { useState, useMemo } from "react";
 
- function Navbar({
+function Navbar({
   activeRoute,
   setActiveRoute,
   user,
@@ -12,26 +13,34 @@
   accessible,
   setAccessible
 }) {
-  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const navItems = [
-    { id: "home", label: "Home", icon: "fa-house" },
-    { id: "encyclopedia", label: "Encyclopedia", icon: "fa-book-open" },
-    { id: "planner", label: "AI Planner", icon: "fa-wand-magic-sparkles" },
-    { id: "tracker", label: "Tracker", icon: "fa-chart-line" },
-    { id: "schedule", label: "Schedule", icon: "fa-calendar-days" },
-    { id: "calculators", label: "Calculators", icon: "fa-calculator" },
-    { id: "alerts", label: "Health Alerts", icon: "fa-triangle-exclamation" },
-    { id: "blog", label: "Blog & Recipes", icon: "fa-newspaper" }
-  ];
+  // ✅ Corrected: Wrap dynamic list evaluation inside useMemo to optimize compilation cycles
+  const navItems = useMemo(() => {
+    const baseItems = [
+      { id: "home", label: "Home", icon: "fa-house" },
+      { id: "encyclopedia", label: "Encyclopedia", icon: "fa-book-open" },
+      { id: "planner", label: "AI Planner", icon: "fa-wand-magic-sparkles" },
+      { id: "tracker", label: "Tracker", icon: "fa-chart-line" },
+      { id: "schedule", label: "Schedule", icon: "fa-calendar-days" },
+      { id: "calculators", label: "Calculators", icon: "fa-calculator" },
+      { id: "alerts", label: "Health Alerts", icon: "fa-triangle-exclamation" },
+      { id: "blog", label: "Blog & Recipes", icon: "fa-newspaper" }
+    ];
 
-  if (user && user.role === "admin") {
-    navItems.push({
-      id: "admin",
-      label: "Admin",
-      icon: "fa-user-shield"
-    });
-  }
+    if (user && user.role === "admin") {
+      return [
+        ...baseItems,
+        {
+          id: "admin",
+          label: "Admin",
+          icon: "fa-user-shield"
+        }
+      ];
+    }
+
+    return baseItems;
+  }, [user]); // Only recalculate if the user payload changes
 
   const toggleTheme = () => {
     setTheme(theme === "light" ? "dark" : "light");
@@ -199,3 +208,5 @@
     </nav>
   );
 }
+
+export default Navbar;

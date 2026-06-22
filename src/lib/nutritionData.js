@@ -1,5 +1,7 @@
-// NutriLife Nutrition Database & Educational Resources Dataset
-window.NutritionData = {
+// src/lib/nutritionData.js
+// NutriLife Nutrition Database & Educational Resources Dataset (ES Module Format)
+
+export const NutritionData = {
   foods: [
     // Fruits
     {

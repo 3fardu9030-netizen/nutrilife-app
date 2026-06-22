@@ -1,8 +1,9 @@
-// NutriLife Footer Component (ES MODULE VIA BABEL)
+// NutriLife Footer Component (Vite ES Module)
+import React, { useState } from "react";
 
- function Footer({ setActiveRoute }) {
-  const [email, setEmail] = React.useState("");
-  const [subscribed, setSubscribed] = React.useState(false);
+function Footer({ setActiveRoute }) {
+  const [email, setEmail] = useState("");
+  const [subscribed, setSubscribed] = useState(false);
 
   const handleSubscribe = (e) => {
     e.preventDefault();
@@ -148,3 +149,6 @@
     </footer>
   );
 }
+
+// 🚀 Explicit export added for compiling under standard Vite bundle architectures
+export default Footer;

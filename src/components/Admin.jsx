@@ -1,9 +1,12 @@
-// NutriLife Secure Admin Control Center Component (ES MODULE VIA BABEL)
+// src/components/Admin.jsx
+import React, { useState, useEffect } from "react";
+// ✅ Corrected Named Import from the refactored modular dataset
+import { NutritionData } from "../lib/nutritionData";
 
- function Admin({ user, customFoods, blogs, comments, dbSync }) {
-  const [activeAdminSubTab, setActiveAdminSubTab] = React.useState("analytics");
+function Admin({ user, customFoods, blogs, comments, dbSync }) {
+  const [activeAdminSubTab, setActiveAdminSubTab] = useState("analytics");
 
-  const [foodForm, setFoodForm] = React.useState({
+  const [foodForm, setFoodForm] = useState({
     name: "",
     category: "Fruits",
     calories: 60,
@@ -18,7 +21,7 @@
     image: "https://images.unsplash.com/photo-1550258987-190a2d41a8ba"
   });
 
-  const [articleForm, setArticleForm] = React.useState({
+  const [articleForm, setArticleForm] = useState({
     title: "",
     category: "Recipes",
     author: "Dr. Evelyn Reed (PhD)",
@@ -29,15 +32,16 @@
   });
 
   // ANALYTICS CHART
-  React.useEffect(() => {
+  useEffect(() => {
     if (activeAdminSubTab === "analytics") {
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         const chartDom = document.querySelector("#admin-analytics-chart");
 
-        if (chartDom) {
+        // Safely check if ApexCharts exists on the window object before calling it
+        if (chartDom && window.ApexCharts) {
           chartDom.innerHTML = "";
 
-          const chart = new ApexCharts(chartDom, {
+          const chart = new window.ApexCharts(chartDom, {
             series: [
               {
                 name: "Page Interactions",
@@ -64,6 +68,8 @@
           chart.render();
         }
       }, 100);
+
+      return () => clearTimeout(timer); // Clean up timeout to prevent memory leaks
     }
   }, [activeAdminSubTab]);
 
@@ -83,8 +89,9 @@
       benefits: typeof foodForm.benefits === "string" ? foodForm.benefits.split(",").map(b => b.trim()) : foodForm.benefits
     };
 
-    if (window.NutritionData) {
-      window.NutritionData.foods.unshift(newFood);
+    // ✅ Corrected: Safely unshifts directly onto the imported module instance reference array
+    if (NutritionData && NutritionData.foods) {
+      NutritionData.foods.unshift(newFood);
     }
 
     dbSync({
@@ -110,8 +117,9 @@
       date: new Date().toISOString().split("T")[0]
     };
 
-    if (window.NutritionData) {
-      window.NutritionData.articles.unshift(newBlog);
+    // ✅ Corrected: Safely unshifts directly onto the imported module instance reference array
+    if (NutritionData && NutritionData.articles) {
+      NutritionData.articles.unshift(newBlog);
     }
 
     dbSync({
@@ -185,7 +193,14 @@
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-slate-500">Category</label>
                   <select className="w-full border dark:border-slate-700 rounded-xl p-2.5 bg-white dark:bg-slate-900" value={foodForm.category} onChange={e => setFoodForm({ ...foodForm, category: e.target.value })}>
-                    <option>Fruits</option><option>Vegetables</option><option>Grains</option><option>Proteins</option><option>Superfoods</option>
+                    <option>Fruits</option>
+                    <option>Vegetables</option>
+                    <option>Grains</option>
+                    <option>Protein sources</option>
+                    <option>Dairy products</option>
+                    <option>Nuts & seeds</option>
+                    <option>Traditional healthy foods</option>
+                    <option>Superfoods</option>
                   </select>
                 </div>
                 <div className="space-y-1">
@@ -207,6 +222,10 @@
                 <div className="md:col-span-2 space-y-1">
                   <label className="text-xs font-semibold text-slate-500">Vitamins & Minerals (Comma Separated)</label>
                   <input className="w-full border dark:border-slate-700 rounded-xl p-2.5 bg-transparent" placeholder="Vitamin E, Potassium, Iron" value={foodForm.vitamins} onChange={e => setFoodForm({ ...foodForm, vitamins: e.target.value })} />
+                </div>
+                <div className="md:col-span-2 space-y-1">
+                  <label className="text-xs font-semibold text-slate-500">Health Benefits (Comma Separated)</label>
+                  <input className="w-full border dark:border-slate-700 rounded-xl p-2.5 bg-transparent" placeholder="Packed with healthy fats, Improves absorption" value={foodForm.benefits} onChange={e => setFoodForm({ ...foodForm, benefits: e.target.value })} />
                 </div>
                 <div className="md:col-span-2">
                   <button type="submit" className="bg-emerald-500 hover:bg-emerald-600 text-white font-medium px-6 py-2.5 rounded-xl transition shadow-md shadow-emerald-500/10">Add Food Item</button>
@@ -259,3 +278,5 @@
     </div>
   );
 }
+
+export default Admin;

@@ -1,7 +1,8 @@
-// NutriLife AI Diet Planner Component (ES MODULE VIA BABEL)
+// src/components/Planner.jsx
+import React, { useState, useMemo } from "react";
 
- function Planner({ user, dbSync }) {
-  const [formData, setFormData] = React.useState({
+function Planner({ user, dbSync }) {
+  const [formData, setFormData] = useState({
     age: user?.age || 28,
     gender: user?.gender || "Male",
     weight: user?.weight || 70,
@@ -13,20 +14,22 @@
     conditions: []
   });
 
-  const [wizardStep, setWizardStep] = React.useState(1);
-  const [generating, setGenerating] = React.useState(false);
-  const [generatedPlan, setGeneratedPlan] = React.useState(null);
+  const [wizardStep, setWizardStep] = useState(1);
+  const [generating, setGenerating] = useState(false);
+  const [generatedPlan, setGeneratedPlan] = useState(null);
 
   // Dynamic biological metric computations
-  const bmi = React.useMemo(() => {
-    if (formData.weight && formData.height) {
-      const meters = formData.height / 100;
-      return (formData.weight / (meters * meters)).toFixed(1);
+  const bmi = useMemo(() => {
+    const w = parseFloat(formData.weight);
+    const h = parseFloat(formData.height);
+    if (w && h) {
+      const meters = h / 100;
+      return (w / (meters * meters)).toFixed(1);
     }
     return "0.0";
   }, [formData.weight, formData.height]);
 
-  const bmiStatus = React.useMemo(() => {
+  const bmiStatus = useMemo(() => {
     const val = parseFloat(bmi);
     if (val < 18.5) return { label: "Underweight", color: "text-amber-500 bg-amber-500/10" };
     if (val < 25) return { label: "Normal Range", color: "text-emerald-500 bg-emerald-500/10" };
@@ -46,11 +49,16 @@
   const generatePlan = () => {
     setGenerating(true);
 
+    // Fallback normalization parameters to handle empty text fields on submission gracefully
+    const finalAge = Math.max(1, parseInt(formData.age) || 28);
+    const finalWeight = Math.max(10, parseFloat(formData.weight) || 70);
+    const finalHeight = Math.max(50, parseFloat(formData.height) || 175);
+
     let bmr;
     if (formData.gender === "Male") {
-      bmr = 10 * formData.weight + 6.25 * formData.height - 5 * formData.age + 5;
+      bmr = 10 * finalWeight + 6.25 * finalHeight - 5 * finalAge + 5;
     } else {
-      bmr = 10 * formData.weight + 6.25 * formData.height - 5 * formData.age - 161;
+      bmr = 10 * finalWeight + 6.25 * finalHeight - 5 * finalAge - 161;
     }
 
     const activityFactors = {
@@ -66,7 +74,6 @@
     if (formData.goal === "Weight Loss") calories -= 450;
     if (formData.goal === "Muscle Building" || formData.goal === "Weight Gain") calories += 400;
 
-    // Macro distribution profile maps
     let proteinRatio = 0.25, carbRatio = 0.50, fatRatio = 0.25;
 
     if (formData.goal === "Muscle Building") {
@@ -75,19 +82,21 @@
       proteinRatio = 0.20; carbRatio = 0.05; fatRatio = 0.75;
     } else if (formData.preference === "High Protein Lean") {
       proteinRatio = 0.40; carbRatio = 0.35; fatRatio = 0.25;
+    } else if (formData.preference === "Vegetarian") {
+      proteinRatio = 0.22; carbRatio = 0.53; fatRatio = 0.25;
     }
 
     const plan = {
-      meta: { ...formData, bmi, tdee, bmr: Math.round(bmr) },
+      meta: { ...formData, age: finalAge, weight: finalWeight, height: finalHeight, bmi, tdee, bmr: Math.round(bmr) },
       targets: {
         calories: Math.max(1200, calories),
         protein: Math.round((calories * proteinRatio) / 4),
         carbs: Math.round((calories * carbRatio) / 4),
         fat: Math.round((calories * fatRatio) / 9),
-        water: (formData.weight * 0.035).toFixed(1)
+        water: (finalWeight * 0.035).toFixed(1)
       },
       meals: {
-        breakfast: `High-fiber ${formData.preference.toLowerCase() === "keto" ? "omelet with spinach, avocado, and olive oil paste" : "oatmeal porridge with fresh berries, chia seeds, and clean whey whey extract"}.`,
+        breakfast: `High-fiber ${formData.preference.toLowerCase() === "keto" ? "omelet with spinach, avocado, and olive oil paste" : "oatmeal porridge with fresh berries, chia seeds, and clean plant or whey extract"}.`,
         lunch: `Macro-balanced fuel bowl featuring a source of lean target protein, steamed cruciferous greens, and complex ${formData.preference.toLowerCase() === "keto" ? "healthy fats" : "quinoa grains"}.`,
         snacks: `Metabolic stabilizer snack: ${formData.preference.toLowerCase() === "keto" ? "mixed almonds or organic pumpkin seeds" : "low-fat strained Greek yogurt layered with raw walnut crush"}.`,
         dinner: `Easily digestible evening dish focusing on steamed wild salmon or baked tofu slices, combined with seasoned zucchini strands.`
@@ -102,9 +111,9 @@
         dbSync({
           users: [{
             ...user,
-            weight: formData.weight,
-            height: formData.height,
-            age: formData.age,
+            weight: finalWeight,
+            height: finalHeight,
+            age: finalAge,
             goal: formData.goal,
             lifestyle: formData.lifestyle
           }]
@@ -174,10 +183,8 @@
                     <label className="text-xs font-bold text-slate-500 dark:text-slate-400">Biological Age</label>
                     <input
                       type="number"
-                      min="1"
-                      max="120"
                       value={formData.age}
-                      onChange={e => setFormData({ ...formData, age: Math.max(1, parseInt(e.target.value) || 0) })}
+                      onChange={e => setFormData({ ...formData, age: e.target.value })}
                       className="w-full border dark:border-slate-800 p-3 rounded-xl text-sm bg-white dark:bg-slate-950 text-slate-800 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:outline-none"
                     />
                   </div>
@@ -185,10 +192,8 @@
                     <label className="text-xs font-bold text-slate-500 dark:text-slate-400">Total Mass (kg)</label>
                     <input
                       type="number"
-                      min="10"
-                      max="300"
                       value={formData.weight}
-                      onChange={e => setFormData({ ...formData, weight: Math.max(0, parseFloat(e.target.value) || 0) })}
+                      onChange={e => setFormData({ ...formData, weight: e.target.value })}
                       className="w-full border dark:border-slate-800 p-3 rounded-xl text-sm bg-white dark:bg-slate-950 text-slate-800 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:outline-none"
                     />
                   </div>
@@ -196,10 +201,8 @@
                     <label className="text-xs font-bold text-slate-500 dark:text-slate-400">Height (cm)</label>
                     <input
                       type="number"
-                      min="50"
-                      max="250"
                       value={formData.height}
-                      onChange={e => setFormData({ ...formData, height: Math.max(0, parseFloat(e.target.value) || 0) })}
+                      onChange={e => setFormData({ ...formData, height: e.target.value })}
                       className="w-full border dark:border-slate-800 p-3 rounded-xl text-sm bg-white dark:bg-slate-950 text-slate-800 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:outline-none"
                     />
                   </div>
@@ -207,7 +210,7 @@
 
                 <div className="bg-slate-50 dark:bg-slate-950 p-4 border dark:border-slate-800 rounded-2xl flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <span className="text-xs text-slate-400 font-semibold block">Body Mass Index ($BMI$) Allocation</span>
+                    <span className="text-xs text-slate-400 font-semibold block">Body Mass Index (BMI) Allocation</span>
                     <span className="text-xl font-black text-slate-800 dark:text-white">{bmi} <span className="text-xs text-slate-400 font-normal">kg/m²</span></span>
                   </div>
                   <span className={`text-[11px] font-bold px-3 py-1.5 rounded-xl border border-slate-500/5 ${bmiStatus.color}`}>
@@ -307,6 +310,7 @@
                       const active = formData.allergies.includes(allergy);
                       return (
                         <button
+                          type="button"
                           key={allergy}
                           onClick={() => handleAllergyToggle(allergy)}
                           className={`px-3 py-2 rounded-xl border text-xs font-semibold transition flex items-center gap-1.5 ${
@@ -323,7 +327,7 @@
                   </div>
                 </div>
 
-                <div className="flex gap-3 pt-2 border-t border-slate-50 dark:border-slate-800/60 pt-4">
+                <div className="flex gap-3 pt-4 border-t border-slate-50 dark:border-slate-800/60">
                   <button
                     onClick={() => setWizardStep(2)}
                     className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:text-white px-5 py-3 rounded-xl text-xs font-bold transition"
@@ -388,7 +392,7 @@
             </button>
           </div>
 
-          {/* CARD MATRIX SPLIT GRID GRID OVERVIEW */}
+          {/* CARD MATRIX SPLIT GRID OVERVIEW */}
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border dark:border-slate-800/50 space-y-1">
               <span className="text-[10px] text-slate-400 font-bold uppercase block">Daily Energy Target</span>
@@ -449,3 +453,5 @@
     </div>
   );
 }
+
+export default Planner;

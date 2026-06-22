@@ -1,75 +1,20 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
-
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>NutriLife - Eat Smart, Live Healthy</title>
-
-  <meta name="description" content="NutriLife helps you calculate BMI, plan healthy diets, track nutrition habits and improve wellness.">
-  <meta name="theme-color" content="#10b981">
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: "class",
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ["Inter", "sans-serif"]
-          }
-        }
-      }
-    }
-  </script>
-
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <link rel="stylesheet" href="css/styles.css">
-
-  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <title>NutriLife - Your Smart Nutrition & Health Companion</title>
+  
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 min-h-screen transition-colors duration-200">
+  
+  <div id="root"></div>
 
-<body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-50 min-h-screen transition-colors duration-200">
-
-  <div id="root">
-    <div id="initial-loader" class="flex flex-col items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-200">
-      <div class="text-emerald-500 text-5xl animate-spin mb-4">
-        <i class="fa-solid fa-leaf"></i>
-      </div>
-      <h1 class="text-3xl font-black tracking-tight text-slate-800 dark:text-white uppercase">
-        NutriLife
-      </h1>
-      <p class="text-emerald-600 dark:text-emerald-400 font-semibold text-xs mt-1.5 tracking-wide uppercase">
-        Nurturing a healthier you...
-      </p>
-    </div>
-  </div>
-
-  <script src="js/supabase.js"></script>
-
-  <script type="text/babel" data-runtime="classic" src="js/components/Navbar.js"></script>
-  <script type="text/babel" data-runtime="classic" src="js/components/Footer.js"></script>
-  <script type="text/babel" data-runtime="classic" src="js/components/Home.js"></script>
-  <script type="text/babel" data-runtime="classic" src="js/components/Encyclopedia.js"></script>
-  <script type="text/babel" data-runtime="classic" src="js/components/Planner.js"></script>
-  <script type="text/babel" data-runtime="classic" src="js/components/Tracker.js"></script>
-  <script type="text/babel" data-runtime="classic" src="js/components/Alerts.js"></script>
-  <script type="text/babel" data-runtime="classic" src="js/components/Schedule.js"></script>
-  <script type="text/babel" data-runtime="classic" src="js/components/Calculators.js"></script>
-  <script type="text/babel" data-runtime="classic" src="js/components/Admin.js"></script>
-  <script type="text/babel" data-runtime="classic" src="js/components/Blog.js"></script>
-  <script type="text/babel" data-runtime="classic" src="js/components/Chat.js"></script>
-
-  <script type="text/babel" data-runtime="classic" src="js/app.js"></script>
-
+  <script type="module" src="/src/main.jsx"></script>
 </body>
 </html>

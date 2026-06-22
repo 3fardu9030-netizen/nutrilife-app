@@ -1,8 +1,23 @@
-// NutriLife - Core Application Container (ES MODULE VIA BABEL)
+// NutriLife - Modernized Application Entry Point (Vite ES Module)
+import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom/client';
 
+// Import Your Main Tailwind Stylesheet
+import './index.css';
 
-// Safe extraction of React hooks from the global window namespace
-const { useState, useEffect } = window.React || React;
+// Import All 12 Component Files from your Components folder
+import Navbar from './components/Navbar';
+import Footer from './components/Footer';
+import Chat from './components/Chat';
+import Home from './components/Home';
+import Encyclopedia from './components/Encyclopedia';
+import Planner from './components/Planner';
+import Tracker from './components/Tracker';
+import Schedule from './components/Schedule';
+import Calculators from './components/Calculators';
+import Alerts from './components/Alerts';
+import Blog from './components/Blog';
+import Admin from './components/Admin';
 
 function App() {
   const [activeRoute, setActiveRoute] = useState("home");
@@ -21,8 +36,8 @@ function App() {
   useEffect(() => {
     async function loadData() {
       try {
-        // Fetched from root folder structure relative pathing
-        const response = await fetch("./data/db.json");
+        // Updated pathing for Vite local asset handling
+        const response = await fetch("/data/db.json");
 
         if (!response.ok) {
           throw new Error("db.json not found");
@@ -144,11 +159,11 @@ function App() {
   );
 }
 
-// Render Application to DOM with Window Namespace Verification
+// Modernized Mount Setup
 const container = document.getElementById("root");
 if (container) {
-  const mountRoot = window.ReactDOM?.createRoot ? window.ReactDOM.createRoot(container) : ReactDOM.createRoot(container);
-  mountRoot.render(
+  const root = ReactDOM.createRoot(container);
+  root.render(
     <React.StrictMode>
       <App />
     </React.StrictMode>

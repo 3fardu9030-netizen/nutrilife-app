@@ -1,12 +1,15 @@
-// NutriLife Blogs, Recipes, & Myths Component (ES MODULE VIA BABEL)
+// src/components/Blog.jsx
+import React, { useState, useMemo } from "react";
+// ✅ Corrected Named Import from the refactored modular dataset
+import { NutritionData } from "../lib/nutritionData";
 
- function Blog({ comments = [], dbSync }) {
-  const [activeBlogTab, setActiveBlogTab] = React.useState("articles");
-  const [selectedArticle, setSelectedArticle] = React.useState(null);
-  const [commentText, setCommentText] = React.useState("");
+function Blog({ comments = [], dbSync }) {
+  const [activeBlogTab, setActiveBlogTab] = useState("articles");
+  const [selectedArticle, setSelectedArticle] = useState(null);
+  const [commentText, setCommentText] = useState("");
 
-  // Robust default structural data fallback maps for clean loading
-  const articles = window.NutritionData?.articles || [
+  // ✅ Corrected: Safely pull datasets directly from the imported ES Module reference
+  const articles = NutritionData?.articles || [
     {
       id: 1,
       title: "Understanding Macronutrients & Bio-Availability",
@@ -16,7 +19,8 @@
     }
   ];
 
-  const myths = window.NutritionData?.myths || [
+  // ✅ Corrected: Safely pull datasets directly from the imported ES Module reference
+  const myths = NutritionData?.myths || [
     {
       myth: "Carbohydrates inherently cause fat storage and should be eliminated.",
       fact: "Carbs are your system's primary and most efficient energy source. Excessive refined sugars cause erratic insulin spikes, but complex carbohydrates supply sustained energy and dietary fiber."
@@ -48,7 +52,7 @@
     }
   ];
 
-  const activeComments = React.useMemo(() => {
+  const activeComments = useMemo(() => {
     if (!selectedArticle || !comments) return [];
     return comments.filter(c => c.articleId === selectedArticle.id);
   }, [comments, selectedArticle]);
@@ -243,3 +247,5 @@
     </div>
   );
 }
+
+export default Blog;

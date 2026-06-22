@@ -1,13 +1,14 @@
-// NutriLife Home Screen View Component (ES MODULE VIA BABEL)
+// src/components/Home.jsx
+import React, { useState, useEffect } from "react";
 
- function Home({ setActiveRoute }) {
-  const [tipIndex, setTipIndex] = React.useState(0);
+function Home({ setActiveRoute }) {
+  const [tipIndex, setTipIndex] = useState(0);
 
-  // Structural default data fallbacks to guarantee uptime on slow async mounts
+  // Fallback structures guaranteeing uptime during network delays
   const dailyTips = window.NutritionData?.dailyTips || [
     {
       title: "Optimized Hydration Habits",
-      text: "Consuming 500ml of clean water immediately upon waking helps fire up metabolic metabolic pathways."
+      text: "Consuming 500ml of clean water immediately upon waking helps fire up metabolic pathways."
     },
     {
       title: "The Balanced Plate Blueprint",
@@ -19,15 +20,17 @@
     }
   ];
 
-  React.useEffect(() => {
-    if (dailyTips.length === 0) return;
+  // RENDERING TIMEOUT ROTATOR PIPELINE
+  useEffect(() => {
+    // Safely prevent intervals from executing if there's nothing or only one item to cycle
+    if (!dailyTips || dailyTips.length <= 1) return;
 
     const timer = setInterval(() => {
       setTipIndex(prev => (prev + 1) % dailyTips.length);
     }, 6000);
 
     return () => clearInterval(timer);
-  }, [dailyTips.length]);
+  }, [dailyTips]); // ✅ Tracking the array reference to safely recalculate on asynchronous database hydration
 
   return (
     <div className="space-y-16 page-transition">
@@ -44,7 +47,7 @@
           <h1 className="text-4xl md:text-5xl font-black tracking-tight leading-tight">
             Optimize Your Vitality Through Precision Nutrition.
           </h1>
-          <p className="text-emerald-500/10 text-sm md:text-base text-emerald-50/90 max-w-lg leading-relaxed">
+          <p className="text-sm md:text-base text-emerald-50/90 max-w-lg leading-relaxed">
             Harness evidence-based metric calculators, customized dietary planners, and metabolic tracking engines to reach your ultimate health baseline.
           </p>
           <div className="pt-4 flex flex-wrap gap-3">
@@ -224,3 +227,5 @@
     </div>
   );
 }
+
+export default Home;
