@@ -1,130 +1,127 @@
-// NutriLife - Core Application Container
-const { useState, useEffect } = React;
+// NutriLife - Core Application Container (ES MODULE VIA BABEL)
+
+
+// Safe extraction of React hooks from the global window namespace
+const { useState, useEffect } = window.React || React;
 
 function App() {
-  const [activeRoute, setActiveRoute] = useState('home');
+  const [activeRoute, setActiveRoute] = useState("home");
   const [user, setUser] = useState(null);
   const [habitLogs, setHabitLogs] = useState([]);
   const [customFoods, setCustomFoods] = useState([]);
   const [blogs, setBlogs] = useState([]);
   const [comments, setComments] = useState([]);
 
-  // Accessibility & System Preferences States
-  const [theme, setTheme] = useState('light');
-  const [lang, setLang] = useState('en');
+  const [theme, setTheme] = useState("light");
+  const [lang, setLang] = useState("en");
   const [accessible, setAccessible] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // 1. Initializer: fetch data from python API /api/db
+  // LOAD DATABASE
   useEffect(() => {
     async function loadData() {
       try {
-        const res = await fetch('/api/db');
-        const db = await res.json();
-        
-        setUser(db.users[0]);
-        setHabitLogs(db.habitLogs);
-        setCustomFoods(db.customFoods);
-        setBlogs(db.blogs);
-        setComments(db.comments);
+        // Fetched from root folder structure relative pathing
+        const response = await fetch("./data/db.json");
 
-        // Prepend custom foods and blogs to window global datasets so encyclopedia and blogs see them
-        if (db.customFoods && db.customFoods.length > 0) {
-          db.customFoods.forEach(food => {
-            if (!window.NutritionData.foods.some(f => f.id === food.id)) {
-              window.NutritionData.foods.unshift(food);
-            }
-          });
-        }
-        if (db.blogs && db.blogs.length > 0) {
-          db.blogs.forEach(blog => {
-            if (!window.NutritionData.articles.some(a => a.id === blog.id)) {
-              window.NutritionData.articles.unshift(blog);
-            }
-          });
+        if (!response.ok) {
+          throw new Error("db.json not found");
         }
 
-      } catch (err) {
-        console.error("Database connection failed. Falling back to local storage...", err);
+        const db = await response.json();
+
+        setUser(db.users?.[0] || null);
+        setHabitLogs(db.habitLogs || []);
+        setCustomFoods(db.customFoods || []);
+        setBlogs(db.blogs || []);
+        setComments(db.comments || []);
+      } catch (error) {
+        console.error("Database loading failed:", error);
       } finally {
-        // Slow down slightly to show off our gorgeous animated loader
+        setLoading(false);
+        // Safely delaying to allow React to paint fallback or DOM nodes
         setTimeout(() => {
-          setLoading(false);
           const loader = document.getElementById("initial-loader");
-          if (loader) loader.remove();
-        }, 0);
+          if (loader) {
+            loader.remove();
+          }
+        }, 50);
       }
     }
+
     loadData();
   }, []);
 
-  // 2. Synchronization engine writeback helper to /api/save
-  const dbSync = async (updates) => {
-    // 1. Mutate React states immediately
-    if (updates.users) setUser(updates.users[0]);
-    if (updates.habitLogs) setHabitLogs(updates.habitLogs);
-    if (updates.customFoods) setCustomFoods(updates.customFoods);
-    if (updates.blogs) setBlogs(updates.blogs);
-    if (updates.comments) setComments(updates.comments);
-};
-
-  // 3. Theme & dark class injection listener
-  useEffect(() => {
-    const root = document.documentElement;
-    if (theme === 'dark') {
-      root.classList.add('dark');
-      document.body.classList.add('dark-mode');
-    } else {
-      root.classList.remove('dark');
-      document.body.classList.remove('dark-mode');
+  // DATABASE SYNC
+  const dbSync = (updates) => {
+    if (updates.users) {
+      setUser(updates.users[0]);
     }
+    if (updates.habitLogs) {
+      setHabitLogs(updates.habitLogs);
+    }
+    if (updates.customFoods) {
+      setCustomFoods(updates.customFoods);
+    }
+    if (updates.blogs) {
+      setBlogs(updates.blogs);
+    }
+    if (updates.comments) {
+      setComments(updates.comments);
+    }
+  };
+
+  // THEME CONTROL
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", theme === "dark");
   }, [theme]);
 
-  // 4. Accessibility text resize class injection
+  // ACCESSIBILITY
   useEffect(() => {
-    const body = document.body;
-    if (accessible) {
-      body.classList.add('high-contrast');
-    } else {
-      body.classList.remove('high-contrast');
-    }
+    document.body.classList.toggle("high-contrast", accessible);
   }, [accessible]);
 
   if (loading) {
-    return null; // Loader handles initial display
+    return null;
   }
 
-  // Router emulator
+  // ROUTER
   const renderActiveRoute = () => {
     switch (activeRoute) {
-      case 'home':
-        return <window.Home setActiveRoute={setActiveRoute} />;
-      case 'encyclopedia':
-        return <window.Encyclopedia />;
-      case 'planner':
-        return <window.Planner user={user} dbSync={dbSync} />;
-      case 'tracker':
-        return <window.Tracker user={user} habitLogs={habitLogs} dbSync={dbSync} />;
-      case 'schedule':
-        return <window.Schedule />;
-      case 'calculators':
-        return <window.Calculators />;
-      case 'alerts':
-        return <window.Alerts />;
-      case 'blog':
-        return <window.Blog comments={comments} dbSync={dbSync} />;
-      case 'admin':
-        return <window.Admin user={user} customFoods={customFoods} blogs={blogs} comments={comments} dbSync={dbSync} />;
+      case "home":
+        return <Home setActiveRoute={setActiveRoute} />;
+      case "encyclopedia":
+        return <Encyclopedia />;
+      case "planner":
+        return <Planner user={user} dbSync={dbSync} />;
+      case "tracker":
+        return <Tracker user={user} habitLogs={habitLogs} dbSync={dbSync} />;
+      case "schedule":
+        return <Schedule />;
+      case "calculators":
+        return <Calculators />;
+      case "alerts":
+        return <Alerts />;
+      case "blog":
+        return <Blog comments={comments} dbSync={dbSync} />;
+      case "admin":
+        return (
+          <Admin
+            user={user}
+            customFoods={customFoods}
+            blogs={blogs}
+            comments={comments}
+            dbSync={dbSync}
+          />
+        );
       default:
-        return <window.Home setActiveRoute={setActiveRoute} />;
+        return <Home setActiveRoute={setActiveRoute} />;
     }
   };
 
   return (
-    <div className={`min-h-screen flex flex-col justify-between ${accessible ? 'text-base-accessible' : ''}`}>
-      
-      {/* Dynamic sticky Navigation */}
-      <window.Navbar
+    <div className="min-h-screen flex flex-col justify-between bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-200">
+      <Navbar
         activeRoute={activeRoute}
         setActiveRoute={setActiveRoute}
         user={user}
@@ -136,22 +133,24 @@ function App() {
         setAccessible={setAccessible}
       />
 
-      {/* Main Content Wrapper with dynamic transition */}
-      <main className="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+      <main className="flex-grow max-w-7xl w-full mx-auto px-4 py-8">
         {renderActiveRoute()}
       </main>
 
-      {/* Premium responsive Footer */}
-      <window.Footer setActiveRoute={setActiveRoute} />
+      <Footer setActiveRoute={setActiveRoute} />
 
-      {/* AI Nutritionist Chatbot bubble */}
-      <window.Chat />
-
+      <Chat />
     </div>
   );
 }
 
-// Mount the App
-const rootEl = document.getElementById('root');
-const root = ReactDOM.createRoot(rootEl);
-root.render(<App />);
+// Render Application to DOM with Window Namespace Verification
+const container = document.getElementById("root");
+if (container) {
+  const mountRoot = window.ReactDOM?.createRoot ? window.ReactDOM.createRoot(container) : ReactDOM.createRoot(container);
+  mountRoot.render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
+}

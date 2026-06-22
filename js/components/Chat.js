@@ -1,18 +1,25 @@
-// NutriLife AI Nutrition Assistant Widget Component
-window.Chat = function () {
+// NutriLife AI Nutrition Assistant Widget Component (ES MODULE VIA BABEL)
+
+ function Chat() {
   const [isOpen, setIsOpen] = React.useState(false);
   const [messages, setMessages] = React.useState([
-    { id: 1, sender: 'bot', text: "Hello! I am your personalized NutriLife AI wellness assistant. Ask me anything about recipes, calorie deficit targets, hydration rules, or disease prevention!", timestamp: "12:00 PM" }
+    {
+      id: 1,
+      sender: "bot",
+      text: "Hello! I am your personalized NutriLife AI wellness assistant. Ask me anything about recipes, calorie targets, hydration rules, or disease prevention!",
+      timestamp: "12:00 PM"
+    }
   ]);
-  const [inputText, setInputText] = React.useState('');
-  const [loading, setLoading] = React.useState(false);
 
+  const [inputText, setInputText] = React.useState("");
+  const [loading, setLoading] = React.useState(false);
   const messagesEndRef = React.useRef(null);
 
-  // Auto scroll
   React.useEffect(() => {
     if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      messagesEndRef.current.scrollIntoView({
+        behavior: "smooth"
+      });
     }
   }, [messages, isOpen]);
 
@@ -20,50 +27,65 @@ window.Chat = function () {
     const text = textToSend || inputText;
     if (!text.trim()) return;
 
-    // Append user message
+    const timestamp = new Date().toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+
     const userMsg = {
-      id: messages.length + 1,
-      sender: 'user',
+      id: Date.now(),
+      sender: "user",
       text: text,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      timestamp: timestamp
     };
-    
+
     setMessages(prev => [...prev, userMsg]);
-    setInputText('');
+    setInputText("");
     setLoading(true);
 
     try {
-      // POST to our Python mock backend
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
         body: JSON.stringify({ message: text })
       });
-      const data = await res.json();
+
+      const data = await response.json();
 
       const botMsg = {
-        id: messages.length + 2,
-        sender: 'bot',
-        text: data.reply,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        id: Date.now() + 1,
+        sender: "bot",
+        text: data.reply || "Sorry, I could not understand that.",
+        timestamp: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit"
+        })
       };
+
       setMessages(prev => [...prev, botMsg]);
-    } catch (e) {
-      console.error(e);
-      const errorMsg = {
-        id: messages.length + 2,
-        sender: 'bot',
-        text: "Apologies, I encountered a brief digest issue connecting to my nutrition database. Let's try that again!",
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-      setMessages(prev => [...prev, errorMsg]);
+    } catch (error) {
+      console.error(error);
+      setMessages(prev => [
+        ...prev,
+        {
+          id: Date.now() + 1,
+          sender: "bot",
+          text: "Sorry, I am having trouble connecting to the nutrition database.",
+          timestamp: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit"
+          })
+        }
+      ]);
     } finally {
       setLoading(false);
     }
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter') handleSendMessage();
+    if (e.key === "Enter") handleSendMessage();
   };
 
   const suggestedQuestions = [
@@ -75,111 +97,99 @@ window.Chat = function () {
 
   return (
     <>
-      {/* 1. FLOATING CHAT BUTTON (Bottom Right) */}
+      {/* TRIGGER FLOATING BUTTON */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        title="Open AI Nutrition Coach"
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/25 hover:scale-105 transition-all focus:outline-none"
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center shadow-xl transition-transform active:scale-95"
       >
         {isOpen ? (
-          <i className="fa-solid fa-xmark text-xl"></i>
+          <i className="fa-solid fa-xmark text-lg"></i>
         ) : (
-          <i className="fa-solid fa-comment-dots text-xl animate-pulse"></i>
+          <i className="fa-solid fa-comment-dots text-lg"></i>
         )}
       </button>
 
-      {/* 2. CHAT OVERLAY WINDOW */}
+      {/* CHAT CONTAINER PANEL */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 z-50 w-full max-w-[380px] h-[520px] rounded-3xl glass-card border border-emerald-500/10 shadow-2xl flex flex-col overflow-hidden animate-slide-up">
-          
-          {/* Header */}
-          <div className="p-4 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white flex items-center space-x-3 shrink-0">
-            <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shadow-inner">
-              <i className="fa-solid fa-leaf text-lg animate-pulse text-white"></i>
+        <div className="fixed bottom-24 right-6 z-50 w-full max-w-[380px] h-[520px] rounded-3xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-100 dark:border-slate-800 flex flex-col overflow-hidden page-transition">
+          {/* HEADER FRAME */}
+          <div className="p-4 bg-emerald-500 text-white flex items-center gap-3 shadow-sm">
+            <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
+              <i className="fa-solid fa-leaf text-base"></i>
             </div>
-            <div className="text-left">
-              <h3 className="text-sm font-bold tracking-tight">AI Nutrition Assistant</h3>
-              <p className="text-[10px] text-emerald-100 font-semibold flex items-center">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-400 mr-1.5 animate-ping"></span> Online | Gemini Powered
+            <div>
+              <h3 className="font-bold text-sm tracking-wide">AI Nutrition Assistant</h3>
+              <p className="text-[11px] opacity-90 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span> Online | Expert Layer
               </p>
             </div>
           </div>
 
-          {/* Messages log */}
-          <div className="flex-grow p-4 overflow-y-auto space-y-4 bg-slate-50/50 dark:bg-slate-950/20 scrollbar-none">
-            {messages.map((msg) => {
-              const isBot = msg.sender === 'bot';
-              return (
-                <div key={msg.id} className={`flex ${isBot ? 'justify-start' : 'justify-end'} items-start gap-2.5`}>
-                  {isBot && (
-                    <div className="w-7 h-7 rounded-lg bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-sm">
-                      <i className="fa-solid fa-leaf text-[10px]"></i>
-                    </div>
-                  )}
-                  <div className="flex flex-col space-y-1 max-w-[80%]">
-                    <div className={`px-4 py-2.5 rounded-2xl text-xs font-sans leading-relaxed text-left ${
-                      isBot
-                        ? 'bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-850 text-slate-800 dark:text-slate-100'
-                        : 'bg-emerald-500 text-white shadow-md shadow-emerald-500/15'
-                    }`}>
-                      {msg.text}
-                    </div>
-                    <span className="text-[9px] text-slate-400 font-semibold px-2 text-left">{msg.timestamp}</span>
-                  </div>
+          {/* MESSAGE SCREEN TRACK */}
+          <div className="flex-grow overflow-y-auto p-4 space-y-4 bg-slate-50/50 dark:bg-slate-950/20">
+            {messages.map(msg => (
+              <div
+                key={msg.id}
+                className={`flex ${msg.sender === "bot" ? "justify-start" : "justify-end"}`}
+              >
+                <div
+                  className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                    msg.sender === "bot"
+                      ? "bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 shadow-sm border border-slate-100 dark:border-slate-700/50 rounded-tl-none"
+                      : "bg-emerald-500 text-white rounded-tr-none shadow-sm"
+                  }`}
+                >
+                  <p>{msg.text}</p>
+                  <span className={`block text-[9px] mt-1 text-right ${msg.sender === "bot" ? "text-slate-400" : "text-emerald-100"}`}>
+                    {msg.timestamp}
+                  </span>
                 </div>
-              );
-            })}
+              </div>
+            ))}
 
-            {/* Typing Loader animation */}
             {loading && (
-              <div className="flex justify-start items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-emerald-500 text-white flex items-center justify-center shrink-0">
-                  <i className="fa-solid fa-leaf text-[10px] animate-spin"></i>
-                </div>
-                <div className="px-4 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center space-x-1">
-                  <div className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                  <div className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                  <div className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '300ms' }}></div>
+              <div className="flex justify-start">
+                <div className="bg-white dark:bg-slate-800 text-slate-400 text-xs px-4 py-2.5 rounded-2xl rounded-tl-none border border-slate-100 dark:border-slate-700/50 flex items-center gap-1.5">
+                  <i className="fa-solid fa-circle-notch animate-spin text-emerald-500"></i> NutriLife is thinking...
                 </div>
               </div>
             )}
             <div ref={messagesEndRef}></div>
           </div>
 
-          {/* Quick suggestions footer */}
-          <div className="p-2 border-t border-slate-100 dark:border-slate-850 shrink-0 bg-white/50 dark:bg-slate-900/50 flex space-x-1.5 overflow-x-auto scrollbar-none">
-            {suggestedQuestions.map((q, i) => (
+          {/* QUICK SUGGESTIONS CONTAINER */}
+          <div className="p-2 border-t dark:border-slate-800 flex gap-2 overflow-x-auto bg-white dark:bg-slate-900 whitespace-nowrap invisible-scrollbar">
+            {suggestedQuestions.map((q, index) => (
               <button
-                key={i}
+                key={index}
                 onClick={() => handleSendMessage(q)}
-                className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-emerald-500 dark:hover:text-emerald-400 hover:border-emerald-500 hover:bg-emerald-500/5 text-[10px] font-bold whitespace-nowrap transition-all"
+                className="text-[11px] border border-slate-200 dark:border-slate-800 hover:border-emerald-500 dark:hover:border-emerald-500 rounded-xl px-3 py-1.5 bg-slate-50 dark:bg-slate-800/40 text-slate-600 dark:text-slate-400 hover:text-emerald-500 transition shrink-0"
               >
                 {q}
               </button>
             ))}
           </div>
 
-          {/* Chat input form */}
-          <div className="p-3 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-850 flex items-center gap-2 shrink-0">
+          {/* INPUT FORM TOOL BAR */}
+          <div className="p-3 border-t dark:border-slate-800 flex gap-2 bg-white dark:bg-slate-900">
             <input
-              type="text"
-              placeholder="Ask about healthy recipes or diet timings..."
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={handleKeyPress}
-              className="flex-grow px-3 py-2.5 glass-input border border-slate-200 dark:border-slate-800 text-xs"
+              placeholder="Ask about calories, hydration..."
+              className="flex-grow border dark:border-slate-800 rounded-xl px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800/50 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+              disabled={loading}
             />
             <button
               onClick={() => handleSendMessage()}
-              disabled={loading}
-              className="w-9 h-9 rounded-xl bg-emerald-500 text-white hover:bg-emerald-600 flex items-center justify-center shadow-md shadow-emerald-500/20 shrink-0"
+              disabled={loading || !inputText.trim()}
+              className="bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-200 dark:disabled:bg-slate-800 text-white disabled:text-slate-400 w-10 rounded-xl flex items-center justify-center transition shadow-sm"
             >
               <i className="fa-solid fa-paper-plane text-xs"></i>
             </button>
           </div>
-
         </div>
       )}
     </>
   );
-};
+}

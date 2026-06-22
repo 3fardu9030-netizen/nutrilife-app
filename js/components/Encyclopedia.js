@@ -1,102 +1,117 @@
-// NutriLife Food Encyclopedia Component
-window.Encyclopedia = function () {
-  const [searchTerm, setSearchTerm] = React.useState('');
-  const [selectedCategory, setSelectedCategory] = React.useState('All');
+// NutriLife Food Encyclopedia Component (ES MODULE VIA BABEL)
+
+ function Encyclopedia() {
+  const [searchTerm, setSearchTerm] = React.useState("");
+  const [selectedCategory, setSelectedCategory] = React.useState("All");
   const [selectedFood, setSelectedFood] = React.useState(null);
   const [voiceListening, setVoiceListening] = React.useState(false);
 
-  const categories = ['All', 'Fruits', 'Vegetables', 'Grains', 'Protein sources', 'Dairy products', 'Nuts & seeds', 'Traditional healthy foods', 'Superfoods'];
-  const allFoods = window.NutritionData.foods;
+  const categories = [
+    "All",
+    "Fruits",
+    "Vegetables",
+    "Grains",
+    "Protein sources",
+    "Dairy products",
+    "Nuts & seeds",
+    "Traditional healthy foods",
+    "Superfoods"
+  ];
 
-  // Render macro chart in modal when selectedFood changes
+  // Robust mock matrix data fallback if asynchronous database hasn't loaded immediately
+  const allFoods = window.NutritionData?.foods || [
+    {
+      id: "avocado",
+      name: "Avocado",
+      category: "Fruits",
+      calories: 160,
+      protein: 2,
+      carbs: 9,
+      fat: 15,
+      vitamins: ["Vitamin K", "Vitamin C", "Potassium", "Vitamin E"],
+      benefits: ["Supports cardiovascular pathways", "Rich in healthy monounsaturated monolipids"],
+      image: "https://images.unsplash.com/photo-1523049673857-eb18f1d7b578"
+    },
+    {
+      id: "blueberries",
+      name: "Blueberries",
+      category: "Superfoods",
+      calories: 57,
+      protein: 1,
+      carbs: 14,
+      fat: 0,
+      vitamins: ["Vitamin C", "Vitamin K", "Manganese"],
+      benefits: ["Extremely high anti-oxidant profile", "Enhances neural cognitive responses"],
+      image: "https://images.unsplash.com/photo-1498557850523-fd3d118b962e"
+    },
+    {
+      id: "spinach",
+      name: "Spinach",
+      category: "Vegetables",
+      calories: 23,
+      protein: 2.9,
+      carbs: 3.6,
+      fat: 0.4,
+      vitamins: ["Vitamin A", "Vitamin C", "Iron", "Calcium"],
+      benefits: ["Boosts oxygenation efficiency", "Supports bone structural longevity"],
+      image: "https://images.unsplash.com/photo-1576045057995-568f588f82fb"
+    }
+  ];
+
+  // RENDERING THE MACRONUTRIENT CHART MATRIX
   React.useEffect(() => {
     if (selectedFood) {
-      // Delay slightly to ensure modal DOM is mounted
-      const timer = setTimeout(() => {
+      setTimeout(() => {
         const chartDom = document.querySelector("#macro-donut-chart");
-        if (chartDom) {
-          chartDom.innerHTML = ""; // Clear existing
-          const options = {
-            series: [selectedFood.protein, selectedFood.carbs, selectedFood.fat],
-            labels: ['Protein (g)', 'Carbs (g)', 'Fats (g)'],
+
+        if (chartDom && window.ApexCharts) {
+          chartDom.innerHTML = "";
+
+          const chart = new ApexCharts(chartDom, {
+            series: [
+              Number(selectedFood.protein) || 0,
+              Number(selectedFood.carbs) || 0,
+              Number(selectedFood.fat) || 0
+            ],
+            labels: ["Protein (g)", "Carbs (g)", "Fats (g)"],
             chart: {
-              type: 'donut',
-              height: 220,
-              fontFamily: 'Outfit, sans-serif'
+              type: "donut",
+              height: 220
             },
-            colors: ['#10b981', '#3b82f6', '#f59e0b'],
+            colors: ["#3b82f6", "#f59e0b", "#10b981"],
             legend: {
-              position: 'bottom',
+              position: "bottom",
               labels: {
-                colors: document.documentElement.classList.contains('dark') ? '#cbd5e1' : '#475569'
+                colors: document.documentElement.classList.contains("dark") ? "#cbd5e1" : "#334155"
               }
             },
             dataLabels: {
               enabled: true,
-              formatter: function (val, opts) {
-                return opts.w.config.series[opts.seriesIndex] + "g"
-              }
-            },
-            plotOptions: {
-              pie: {
-                donut: {
-                  size: '65%',
-                  labels: {
-                    show: true,
-                    name: {
-                      show: true,
-                      color: '#64748b',
-                      fontSize: '12px'
-                    },
-                    value: {
-                      show: true,
-                      color: document.documentElement.classList.contains('dark') ? '#f8fafc' : '#0f172a',
-                      fontSize: '16px',
-                      fontWeight: '700',
-                      formatter: function (val) {
-                        return val + "g"
-                      }
-                    },
-                    total: {
-                      show: true,
-                      label: 'Total Macros',
-                      color: '#10b981',
-                      formatter: function (w) {
-                        return (selectedFood.protein + selectedFood.carbs + selectedFood.fat).toFixed(1) + "g"
-                      }
-                    }
-                  }
-                }
+              formatter: function (val) {
+                return Math.round(val) + "%";
               }
             }
-          };
-          const chart = new ApexCharts(chartDom, options);
+          });
+
           chart.render();
         }
-      }, 100);
-      return () => clearTimeout(timer);
+      }, 120);
     }
   }, [selectedFood]);
 
-  // Voice Search Trigger using Web Speech API
+  // NATIVE VOICE RECOGNITION PIPELINE ENGINE
   const handleVoiceSearch = () => {
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      alert("Voice speech recognition is not supported in this browser. Try Google Chrome.");
+    if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
+      alert("Voice speech recognition interfaces are not configured inside this browser architecture.");
       return;
     }
+
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
-    recognition.lang = 'en-US';
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
+    recognition.lang = "en-US";
 
     recognition.onstart = () => {
       setVoiceListening(true);
-    };
-
-    recognition.onerror = (e) => {
-      console.error(e);
-      setVoiceListening(false);
     };
 
     recognition.onend = () => {
@@ -104,284 +119,184 @@ window.Encyclopedia = function () {
     };
 
     recognition.onresult = (event) => {
-      const speechToText = event.results[0][0].transcript;
-      setSearchTerm(speechToText);
+      if (event.results?.[0]?.[0]?.transcript) {
+        setSearchTerm(event.results[0][0].transcript);
+      }
     };
 
     recognition.start();
   };
 
-  // Filter foods
-  const filteredFoods = allFoods.filter((food) => {
-    const matchesSearch = food.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          food.benefits.some(b => b.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                          food.vitamins.some(v => v.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesCategory = selectedCategory === 'All' || food.category === selectedCategory;
+  const filteredFoods = allFoods.filter(food => {
+    const search = searchTerm.toLowerCase().trim();
+
+    const matchesSearch =
+      food.name.toLowerCase().includes(search) ||
+      food.benefits?.some(b => b.toLowerCase().includes(search)) ||
+      food.vitamins?.some(v => v.toLowerCase().includes(search));
+
+    const matchesCategory = selectedCategory === "All" || food.category === selectedCategory;
+
     return matchesSearch && matchesCategory;
   });
 
   return (
     <div className="space-y-8 page-transition">
-      {/* Title & Intro Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-100 dark:border-slate-800/80 pb-6">
-        <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-800 dark:text-white font-sans">
-            Food Nutrition Encyclopedia
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Browse through hundreds of whole foods, superfoods, and grains. View granular vitamins, recommended servings, and macro-nutritional balances.
-          </p>
+      {/* HEADER SECTION CONTAINER */}
+      <div className="border-b border-slate-100 dark:border-slate-800 pb-6">
+        <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white flex items-center gap-2">
+          <i className="fa-solid fa-seedling text-emerald-500"></i> Food Nutrition Encyclopedia
+        </h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
+          Deconstruct metabolic baselines, macronutrient splits, vitamins profiles, and targeted physiological benefits.
+        </p>
+      </div>
+
+      {/* SEARCH AND CAPTURE ROW ELEMENTS */}
+      <div className="relative group">
+        <i className="fa-solid fa-magnifying-glass absolute left-4 top-4 text-slate-400 group-focus-within:text-emerald-500 transition"></i>
+        <input
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Search items by name, isolated target micro-nutrients or physical health benefits..."
+          className="w-full border dark:border-slate-800 rounded-2xl pl-11 pr-12 py-3 bg-white dark:bg-slate-900 text-slate-800 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 shadow-sm"
+        />
+        <button
+          onClick={handleVoiceSearch}
+          className={`absolute right-4 top-3.5 transition ${
+            voiceListening ? "text-red-500 scale-110 animate-pulse" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+          }`}
+          title="Voice Search"
+        >
+          <i className={`fa-solid ${voiceListening ? "fa-microphone-lines" : "fa-microphone"}`}></i>
+        </button>
+      </div>
+
+      {/* HORIZONTAL CATEGORIES ROW SCROLLER */}
+      <div className="flex gap-2 overflow-x-auto pb-2 invisible-scrollbar border-b border-slate-100 dark:border-slate-800/60">
+        {categories.map(cat => {
+          const active = selectedCategory === cat;
+          return (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition ${
+                active
+                  ? "bg-emerald-500 text-white shadow-sm"
+                  : "bg-slate-50 text-slate-600 hover:bg-slate-100 dark:bg-slate-800/60 dark:text-slate-300 dark:hover:bg-slate-800"
+              }`}
+            >
+              {cat}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* GRID SYSTEM DISPLAY ENGINE */}
+      {filteredFoods.length === 0 ? (
+        <div className="p-12 text-center text-slate-400 dark:text-slate-500 border border-dashed rounded-2xl">
+          <i className="fa-solid fa-shrimp text-2xl mb-2 block"></i> No food catalog assets found matching your criteria.
         </div>
-      </div>
-
-      {/* Search & Category Filter Controls */}
-      <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center">
-        {/* Search Bar */}
-        <div className="relative flex-grow">
-          <i className="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-slate-400 text-sm"></i>
-          <input
-            type="text"
-            placeholder="Search foods, vitamins, minerals, or benefits..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-11 pr-12 py-3 glass-input border border-slate-200 dark:border-slate-800 text-sm font-sans"
-          />
-          {/* Voice Search Button */}
-          <button
-            onClick={handleVoiceSearch}
-            title="Search with Voice"
-            className={`absolute right-3 top-2 p-1.5 rounded-lg transition-all ${
-              voiceListening ? 'bg-red-500 text-white animate-pulse' : 'text-slate-400 hover:text-emerald-500 hover:bg-emerald-500/10'
-            }`}
-          >
-            <i className="fa-solid fa-microphone text-sm"></i>
-          </button>
-        </div>
-      </div>
-
-      {/* Category Pills List */}
-      <div className="flex space-x-2 overflow-x-auto pb-3 -mx-4 px-4 scrollbar-thin">
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setSelectedCategory(cat)}
-            className={`px-4 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-all duration-200 border shrink-0 ${
-              selectedCategory === cat
-                ? 'bg-emerald-500 text-white border-emerald-500 shadow-md shadow-emerald-500/20'
-                : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-emerald-500 hover:text-emerald-500'
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
-
-      {/* Foods Grid */}
-      {filteredFoods.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredFoods.map((food) => (
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredFoods.map(food => (
             <div
               key={food.id}
               onClick={() => setSelectedFood(food)}
-              className="glass-card overflow-hidden hover:scale-[1.02] border border-slate-200/5 hover:border-emerald-500/25 transition-all duration-300 cursor-pointer shadow-sm group flex flex-col justify-between"
+              className="rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden cursor-pointer bg-white dark:bg-slate-900 hover:shadow-md hover:border-emerald-500/20 transition-all group shadow-sm flex flex-col justify-between"
             >
               <div>
-                {/* Food Image */}
-                <div className="h-44 w-full relative overflow-hidden bg-slate-100 dark:bg-slate-950">
+                <div className="overflow-hidden h-44">
                   <img
                     src={food.image}
                     alt={food.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    loading="lazy"
+                    className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                   />
-                  <span className="absolute top-3 right-3 px-3 py-1 rounded-xl bg-slate-900/80 text-white text-[10px] font-extrabold uppercase tracking-wider backdrop-blur-md">
-                    {food.category}
-                  </span>
                 </div>
-
-                {/* Card Content */}
-                <div className="p-5 space-y-3">
-                  <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{food.name}</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
-                    {food.benefits[0]}
+                <div className="p-5 space-y-2">
+                  <h3 className="font-bold text-slate-800 dark:text-white text-base group-hover:text-emerald-500 transition">
+                    {food.name}
+                  </h3>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 line-clamp-1 italic">
+                    {food.benefits?.[0] || "Nutrient dense profiles"}
                   </p>
-                  
-                  {/* Macro Badges bar */}
-                  <div className="grid grid-cols-4 gap-2 pt-2 text-center border-t border-slate-100 dark:border-slate-800/80">
-                    <div className="py-1">
-                      <p className="text-[10px] text-slate-400 font-bold uppercase">Kcal</p>
-                      <p className="text-xs font-extrabold text-slate-700 dark:text-slate-300">{food.calories}</p>
-                    </div>
-                    <div className="py-1">
-                      <p className="text-[10px] text-slate-400 font-bold uppercase">Prot</p>
-                      <p className="text-xs font-extrabold text-emerald-500">{food.protein}g</p>
-                    </div>
-                    <div className="py-1">
-                      <p className="text-[10px] text-slate-400 font-bold uppercase">Carbs</p>
-                      <p className="text-xs font-extrabold text-blue-500">{food.carbs}g</p>
-                    </div>
-                    <div className="py-1">
-                      <p className="text-[10px] text-slate-400 font-bold uppercase">Fat</p>
-                      <p className="text-xs font-extrabold text-amber-500">{food.fat}g</p>
-                    </div>
+                  <div className="grid grid-cols-2 gap-2 pt-2 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                    <span className="flex items-center gap-1"><i className="fa-solid fa-fire text-orange-500"></i> {food.calories} kcal</span>
+                    <span className="flex items-center gap-1"><i className="fa-solid fa-dumbbell text-blue-500"></i> {food.protein}g Prot</span>
+                    <span className="flex items-center gap-1"><i className="fa-solid fa-wheat-awn text-amber-500"></i> {food.carbs}g Carb</span>
+                    <span className="flex items-center gap-1"><i className="fa-solid fa-olive-oil text-emerald-500"></i> {food.fat}g Fat</span>
                   </div>
                 </div>
-              </div>
-
-              {/* Servings hint */}
-              <div className="px-5 py-3.5 bg-slate-50/50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800/50 flex items-center justify-between text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                <span>⏱️ {food.bestTime.split(' / ')[0]}</span>
-                <span>Serv: {food.quantity.split(' daily')[0]}</span>
               </div>
             </div>
           ))}
         </div>
-      ) : (
-        <div className="text-center py-12 glass-card border border-dashed border-slate-200 dark:border-slate-800 space-y-3">
-          <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-900 text-slate-400 flex items-center justify-center mx-auto text-2xl">
-            <i className="fa-solid fa-lemon"></i>
-          </div>
-          <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">No foods found</h3>
-          <p className="text-xs text-slate-500 max-w-xs mx-auto">
-            We couldn't match your search "{searchTerm}". Try entering a vitamin like "Vitamin C", a benefit like "immune", or category "Superfoods".
-          </p>
-        </div>
       )}
 
-      {/* 5. FOOD DETAIL MODAL */}
+      {/* OVERLAY SYSTEM BLOCKING DIALOG VIEW MODAL */}
       {selectedFood && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-fade-in">
-          <div className="glass-card w-full max-w-[680px] max-h-[90vh] overflow-y-auto border border-emerald-500/10 shadow-2xl relative animate-slide-up flex flex-col">
-            
-            {/* Close Button */}
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 border dark:border-slate-800 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl relative p-6 space-y-6 invisible-scrollbar">
+            {/* DISMISS BUTTON */}
             <button
               onClick={() => setSelectedFood(null)}
-              className="absolute right-4 top-4 z-10 w-8 h-8 rounded-full bg-slate-900/60 hover:bg-red-500 text-white flex items-center justify-center transition-colors"
+              className="absolute right-4 top-4 text-slate-400 hover:text-red-500 p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition"
             >
-              <i className="fa-solid fa-xmark text-sm"></i>
+              <i className="fa-solid fa-xmark text-lg"></i>
             </button>
 
-            {/* Modal Image Header */}
-            <div className="h-52 w-full relative shrink-0 bg-slate-200 dark:bg-slate-950">
-              <img
-                src={selectedFood.image}
-                alt={selectedFood.name}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/30 to-transparent"></div>
-              <div className="absolute bottom-4 left-6">
-                <span className="px-2.5 py-0.5 rounded-lg bg-emerald-500 text-white text-[9px] font-extrabold uppercase tracking-widest">{selectedFood.category}</span>
-                <h2 className="text-2xl font-bold text-white mt-1">{selectedFood.name} Detailed Profile</h2>
-              </div>
+            <img
+              src={selectedFood.image}
+              alt={selectedFood.name}
+              className="w-full h-52 object-cover rounded-xl shadow-sm"
+            />
+
+            <div>
+              <span className="text-[10px] bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 font-bold tracking-wider uppercase px-2.5 py-1 rounded-md">
+                {selectedFood.category}
+              </span>
+              <h2 className="text-2xl font-black text-slate-800 dark:text-white mt-2">{selectedFood.name}</h2>
             </div>
 
-            {/* Modal Body */}
-            <div className="p-6 space-y-6">
-              
-              {/* Macro breakdown grid with donut chart */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-                
-                {/* Stats block */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-extrabold uppercase tracking-wide text-emerald-500">Nutritional Densities (100g)</h3>
-                  
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
-                      <p className="text-[10px] text-slate-400 font-bold uppercase">Energy</p>
-                      <p className="text-lg font-black text-slate-800 dark:text-slate-100">{selectedFood.calories} kcal</p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
-                      <p className="text-[10px] text-slate-400 font-bold uppercase">Protein</p>
-                      <p className="text-lg font-black text-emerald-500">{selectedFood.protein}g</p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
-                      <p className="text-[10px] text-slate-400 font-bold uppercase">Carbs</p>
-                      <p className="text-lg font-black text-blue-500">{selectedFood.carbs}g</p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
-                      <p className="text-[10px] text-slate-400 font-bold uppercase">Healthy Fats</p>
-                      <p className="text-lg font-black text-amber-500">{selectedFood.fat}g</p>
-                    </div>
-                  </div>
-
-                  {/* Vitamins pills */}
-                  <div className="space-y-2">
-                    <p className="text-[10px] text-slate-400 font-bold uppercase">Micronutrients & Vitamins</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {selectedFood.vitamins.map((v, i) => (
-                        <span key={i} className="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
-                          ✦ {v}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Donut Chart Mount */}
-                <div className="flex flex-col items-center justify-center p-3 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-850">
-                  <p className="text-[10px] text-slate-400 font-bold uppercase mb-2">Macronutrient Ratio</p>
-                  <div id="macro-donut-chart" className="w-full"></div>
-                </div>
-
-              </div>
-
-              {/* Health Benefits and Intake guides */}
-              <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800/80">
-                
-                {/* Benefits */}
-                <div className="space-y-2">
-                  <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Biological Benefits</h4>
-                  <ul className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
-                    {selectedFood.benefits.map((b, i) => (
-                      <li key={i} className="flex items-start">
-                        <i className="fa-solid fa-circle-check text-emerald-500 mr-2 mt-0.5 shrink-0"></i>
-                        <span>{b}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Consuming advice */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs pt-2">
-                  <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/10 space-y-1">
-                    <p className="font-bold text-emerald-600 dark:text-emerald-400">⏱️ Ideal Sched timings</p>
-                    <p className="text-slate-500 dark:text-slate-300 font-medium">{selectedFood.bestTime}</p>
-                  </div>
-                  <div className="p-3 rounded-xl bg-blue-500/5 border border-blue-500/10 space-y-1">
-                    <p className="font-bold text-blue-600 dark:text-blue-400">⚖️ Serving quantity</p>
-                    <p className="text-slate-500 dark:text-slate-300 font-medium">{selectedFood.quantity}</p>
-                  </div>
-                </div>
-
-                {/* Side effects warning */}
-                {selectedFood.sideEffects && (
-                  <div className="p-3.5 rounded-xl bg-amber-500/5 border border-amber-500/10 text-xs flex items-start space-x-3.5">
-                    <i className="fa-solid fa-triangle-exclamation text-amber-500 text-sm mt-0.5 shrink-0"></i>
-                    <div>
-                      <p className="font-bold text-amber-600 dark:text-amber-400">Excess Warning</p>
-                      <p className="text-slate-500 dark:text-slate-300 leading-relaxed mt-0.5">{selectedFood.sideEffects}</p>
-                    </div>
-                  </div>
-                )}
-
-              </div>
-
+            {/* DYNAMIC APEXCHARTS ELEMENT */}
+            <div className="bg-slate-50 dark:bg-slate-950/40 p-4 border dark:border-slate-800 rounded-xl flex flex-col items-center">
+              <span className="text-xs text-slate-400 font-bold mb-2">Macronutrient Distribution Profile</span>
+              <div id="macro-donut-chart"></div>
             </div>
 
-            {/* Modal Footer */}
-            <div className="p-4 bg-slate-50 dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800/80 flex justify-end shrink-0">
-              <button
-                onClick={() => setSelectedFood(null)}
-                className="px-5 py-2.5 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white"
-              >
-                Close Profile
-              </button>
+            {/* METABOLIC BENEFIT RECAPS */}
+            <div className="space-y-2">
+              <h3 className="font-bold text-sm text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                <i className="fa-solid fa-circle-nodes text-emerald-500"></i> Metabolic Path Benefits
+              </h3>
+              <ul className="text-xs text-slate-600 dark:text-slate-400 space-y-1.5 pl-1">
+                {selectedFood.benefits?.map((b, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <i className="fa-solid fa-square-check text-emerald-500 mt-0.5"></i> <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
 
+            {/* MICRONUTRIENT ALLOCATIONS */}
+            <div className="space-y-2.5">
+              <h3 className="font-bold text-sm text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                <i className="fa-solid fa-vial text-blue-500"></i> Micro-Nutrients & Vitamins
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {selectedFood.vitamins?.map((v, i) => (
+                  <span
+                    key={i}
+                    className="px-3 py-1.5 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 text-xs font-semibold rounded-xl"
+                  >
+                    ✨ {v}
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}
-
     </div>
   );
-};
+}

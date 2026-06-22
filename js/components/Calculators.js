@@ -1,736 +1,231 @@
-const Calculators = () => {
+// NutriLife Health & Metabolic Calculators Component (ES MODULE VIA BABEL)
 
-    // =========================
-    // SUPABASE CLIENT
-    // =========================
-    const supabase = window.supabaseClient;
+ function Calculators() {
+  // =========================
+  // SUPABASE CONFIG / STATE
+  // =========================
+  const supabase = window.supabaseClient;
 
-    if (!supabase) {
-        return (
-            <div className="p-10 text-red-500 text-center">
-                Supabase failed to load.
-            </div>
-        );
-    }
+  if (!supabase) {
+    return (
+      <div className="p-10 text-red-500 text-center font-medium bg-red-50 rounded-xl max-w-md mx-auto mt-12 border border-red-100">
+        <i className="fa-solid fa-triangle-exclamation mr-2"></i>
+        Supabase infrastructure failed to connect.
+      </div>
+    );
+  }
 
-    // =========================
-    // AUTH STATES
-    // =========================
-    const [user, setUser] = React.useState(null);
-    const [authEmail, setAuthEmail] = React.useState('');
-    const [authPassword, setAuthPassword] = React.useState('');
-    const [authLoading, setAuthLoading] = React.useState(false);
+  const [user, setUser] = React.useState(null);
+  const [inputs, setInputs] = React.useState({
+    weight: "",
+    height: "",
+    age: "",
+    gender: "Male",
+    activity: "Moderately Active",
+    neck: "",
+    waist: "",
+    hip: "",
+    goal: "Maintenance"
+  });
 
-    // =========================
-    // ACTIVE TAB
-    // =========================
-    const [activeTab, setActiveTab] = React.useState('bmi');
-
-    // =========================
-    // INPUT STATES
-    // =========================
-    const [inputs, setInputs] = React.useState({
-        weight: '',
-        height: '',
-        age: '',
-        gender: 'Male',
-        activity: 'Moderately Active',
-        neck: '',
-        waist: '',
-        hip: '',
-        goal: 'Maintenance'
+  React.useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user || null);
     });
 
-    // =========================
-    // SESSION TRACKING
-    // =========================
-    React.useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+    });
 
-        if (!supabase) {
-            console.error('Supabase client not found');
-            return;
-        }
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setUser(session?.user ?? null);
-        });
+  const handleInputChange = (key, value) => {
+    setInputs(prev => ({
+      ...prev,
+      [key]: value === "" ? "" : value
+    }));
+  };
 
-        const {
-            data: { subscription }
-        } = supabase.auth.onAuthStateChange((_event, session) => {
-            setUser(session?.user ?? null);
-        });
+  // =========================
+  // METABOLIC MEMO FORMULAS
+  // =========================
+  const bmi = React.useMemo(() => {
+    if (!inputs.height || !inputs.weight) return "0.0";
+    const heightM = inputs.height / 100;
+    return (inputs.weight / (heightM * heightM)).toFixed(1);
+  }, [inputs.height, inputs.weight]);
 
-        return () => {
-            subscription.unsubscribe();
-        };
+  const calorieTarget = React.useMemo(() => {
+    if (!inputs.weight || !inputs.height || !inputs.age) return 0;
 
-    }, [supabase]);
+    let bmr;
+    if (inputs.gender === "Male") {
+      bmr = 10 * inputs.weight + 6.25 * inputs.height - 5 * inputs.age + 5;
+    } else {
+      bmr = 10 * inputs.weight + 6.25 * inputs.height - 5 * inputs.age - 161;
+    }
 
-    // =========================
-    // INPUT HANDLER
-    // =========================
-    const handleInputChange = (key, value) => {
-
-        setInputs(prev => ({
-            ...prev,
-            [key]: value
-        }));
-
+    const factors = {
+      "Sedentary": 1.2,
+      "Lightly Active": 1.375,
+      "Moderately Active": 1.55,
+      "Very Active": 1.725
     };
 
-    // =========================
-    // SIGN UP
-    // =========================
-    const handleSignUp = async () => {
-
-        if (!authEmail || !authPassword) {
-            alert('Please enter email and password');
-            return;
-        }
-
-        try {
-
-            setAuthLoading(true);
-
-            const { error } = await supabase.auth.signUp({
-                email: authEmail,
-                password: authPassword
-            });
-
-            if (error) {
-                alert(error.message);
-            } else {
-                alert('Signup successful! Check your email.');
-            }
-
-        } catch (err) {
-
-            console.error(err);
-            alert('Signup failed');
-
-        } finally {
-
-            setAuthLoading(false);
-
-        }
-    };
-
-    // =========================
-    // LOGIN
-    // =========================
-    const handleLogin = async () => {
-
-        if (!authEmail || !authPassword) {
-            alert('Please enter email and password');
-            return;
-        }
-
-        try {
-
-            setAuthLoading(true);
-
-            const { error } = await supabase.auth.signInWithPassword({
-                email: authEmail,
-                password: authPassword
-            });
-
-            if (error) {
-                alert(error.message);
-            }
-
-        } catch (err) {
-
-            console.error(err);
-            alert('Login failed');
-
-        } finally {
-
-            setAuthLoading(false);
-
-        }
-    };
-
-    // =========================
-    // LOGOUT
-    // =========================
-    const handleLogout = async () => {
-
-        try {
-            await supabase.auth.signOut();
-        } catch (err) {
-            console.error(err);
-        }
-
-    };
-
-    // =========================
-    // BMI
-    // =========================
-    const bmi = React.useMemo(() => {
-
-        if (!inputs.height || !inputs.weight) {
-            return 0;
-        }
-
-        const heightM = inputs.height / 100;
-
-        return (
-            inputs.weight /
-            (heightM * heightM)
-        ).toFixed(1);
-
-    }, [inputs.height, inputs.weight]);
-
-    // =========================
-    // BMI STATUS
-    // =========================
-    const bmiStatus = React.useMemo(() => {
-
-        const val = parseFloat(bmi);
-
-        if (val < 18.5) {
-            return {
-                name: 'Underweight',
-                color: 'text-blue-500 bg-blue-100'
-            };
-        }
-
-        if (val < 25) {
-            return {
-                name: 'Normal',
-                color: 'text-green-500 bg-green-100'
-            };
-        }
-
-        if (val < 30) {
-            return {
-                name: 'Overweight',
-                color: 'text-yellow-500 bg-yellow-100'
-            };
-        }
-
-        return {
-            name: 'Obese',
-            color: 'text-red-500 bg-red-100'
-        };
-
-    }, [bmi]);
-
-    // =========================
-    // CALORIES
-    // =========================
-    const calorieTarget = React.useMemo(() => {
-
-        if (
-            !inputs.weight ||
-            !inputs.height ||
-            !inputs.age
-        ) {
-            return 0;
-        }
-
-        let bmr = 0;
-
-        if (inputs.gender === 'Male') {
-
-            bmr =
-                10 * inputs.weight +
-                6.25 * inputs.height -
-                5 * inputs.age +
-                5;
-
-        } else {
-
-            bmr =
-                10 * inputs.weight +
-                6.25 * inputs.height -
-                5 * inputs.age -
-                161;
-        }
-
-        const factors = {
-            Sedentary: 1.2,
-            'Lightly Active': 1.375,
-            'Moderately Active': 1.55,
-            'Very Active': 1.725
-        };
-
-        const tdee = Math.round(
-            bmr * factors[inputs.activity]
-        );
-
-        if (inputs.goal === 'Loss') {
-            return tdee - 500;
-        }
-
-        if (inputs.goal === 'Gain') {
-            return tdee + 400;
-        }
-
-        return tdee;
-
-    }, [inputs]);
-
-    // =========================
-    // WATER
-    // =========================
-    const waterTarget = React.useMemo(() => {
-
-        if (!inputs.weight) {
-            return 0;
-        }
-
-        return (
-            (inputs.weight * 0.035) + 0.4
-        ).toFixed(1);
-
-    }, [inputs.weight]);
-
-    // =========================
-    // PROTEIN
-    // =========================
-    const proteinTarget = React.useMemo(() => {
-
-        if (!inputs.weight) {
-            return 0;
-        }
-
-        let multiplier = 1.2;
-
-        if (inputs.activity === 'Moderately Active') {
-            multiplier = 1.6;
-        }
-
-        if (inputs.activity === 'Very Active') {
-            multiplier = 2.0;
-        }
-
-        return Math.round(
-            inputs.weight * multiplier
-        );
-
-    }, [inputs.weight, inputs.activity]);
-
-    // =========================
-    // BODY FAT
-    // =========================
-    const bodyFat = React.useMemo(() => {
-
-        try {
-
-            if (
-                !inputs.height ||
-                !inputs.waist ||
-                !inputs.neck
-            ) {
-                return 0;
-            }
-
-            const h = inputs.height / 2.54;
-            const w = inputs.waist / 2.54;
-            const n = inputs.neck / 2.54;
-            const hip = inputs.hip / 2.54;
-
-            if (inputs.gender === 'Male') {
-
-                const val =
-                    86.01 * Math.log10(w - n) -
-                    70.041 * Math.log10(h) +
-                    36.76;
-
-                return val.toFixed(1);
-
-            } else {
-
-                if (!inputs.hip) {
-                    return 0;
-                }
-
-                const val =
-                    163.205 * Math.log10(w + hip - n) -
-                    97.684 * Math.log10(h) -
-                    78.387;
-
-                return val.toFixed(1);
-
-            }
-
-        } catch {
-
-            return '0';
-
-        }
-
-    }, [inputs]);
-
-    // =========================
-    // UI
-    // =========================
-    return (
-
-        <div className="min-h-screen bg-slate-100 p-4">
-
-            {!user ? (
-
-                <div className="max-w-md mx-auto mt-20 bg-white p-6 rounded-xl shadow">
-
-                    <h2 className="text-2xl font-bold mb-6 text-center">
-                        NutriLife Login
-                    </h2>
-
-                    <div className="space-y-4">
-
-                        <input
-                            type="email"
-                            placeholder="Email"
-                            value={authEmail}
-                            onChange={(e) => setAuthEmail(e.target.value)}
-                            className="w-full border p-2 rounded"
-                        />
-
-                        <input
-                            type="password"
-                            placeholder="Password"
-                            value={authPassword}
-                            onChange={(e) => setAuthPassword(e.target.value)}
-                            className="w-full border p-2 rounded"
-                        />
-
-                        <div className="flex gap-3">
-
-                            <button
-                                type="button"
-                                onClick={handleLogin}
-                                disabled={authLoading}
-                                className="flex-1 bg-blue-600 text-white p-2 rounded"
-                            >
-                                {authLoading ? 'Loading...' : 'Login'}
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={handleSignUp}
-                                disabled={authLoading}
-                                className="flex-1 bg-green-600 text-white p-2 rounded"
-                            >
-                                Sign Up
-                            </button>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            ) : (
-
-                <div className="max-w-5xl mx-auto space-y-6">
-
-                    {/* HEADER */}
-                    <div className="bg-white rounded-xl shadow p-4 flex justify-between items-center">
-
-                        <div>
-                            Logged in as:
-                            <strong> {user.email}</strong>
-                        </div>
-
-                        <button
-                            type="button"
-                            onClick={handleLogout}
-                            className="bg-red-500 text-white px-4 py-2 rounded"
-                        >
-                            Logout
-                        </button>
-
-                    </div>
-
-                    {/* TABS */}
-                    <div className="flex gap-2 flex-wrap">
-
-                        {['bmi', 'calorie', 'water', 'protein', 'fat'].map((tab) => (
-
-                            <button
-                                key={tab}
-                                type="button"
-                                onClick={() => setActiveTab(tab)}
-                                className={`px-4 py-2 rounded font-bold ${
-                                    activeTab === tab
-                                        ? 'bg-emerald-500 text-white'
-                                        : 'bg-white'
-                                }`}
-                            >
-                                {tab.toUpperCase()}
-                            </button>
-
-                        ))}
-
-                    </div>
-
-                    {/* CONTENT */}
-                    <div className="grid lg:grid-cols-2 gap-6">
-
-                        {/* INPUTS */}
-                        <div className="bg-white rounded-xl shadow p-6 space-y-4">
-
-                            <h2 className="font-bold text-xl">
-                                Parameters
-                            </h2>
-
-                            {/* HEIGHT */}
-                            <div>
-                                <label className="block font-semibold mb-1">
-                                    Height (cm)
-                                </label>
-
-                                <input
-                                    type="number"
-                                    value={inputs.height}
-                                    onChange={(e) =>
-                                        handleInputChange(
-                                            'height',
-                                            e.target.value === ''
-                                                ? ''
-                                                : parseFloat(e.target.value)
-                                        )
-                                    }
-                                    className="w-full border p-2 rounded"
-                                    placeholder="Enter height"
-                                />
-                            </div>
-
-                            {/* WEIGHT */}
-                            <div>
-                                <label className="block font-semibold mb-1">
-                                    Weight (kg)
-                                </label>
-
-                                <input
-                                    type="number"
-                                    value={inputs.weight}
-                                    onChange={(e) =>
-                                        handleInputChange(
-                                            'weight',
-                                            e.target.value === ''
-                                                ? ''
-                                                : parseFloat(e.target.value)
-                                        )
-                                    }
-                                    className="w-full border p-2 rounded"
-                                    placeholder="Enter weight"
-                                />
-                            </div>
-
-                            {/* AGE */}
-                            <div>
-                                <label className="block font-semibold mb-1">
-                                    Age
-                                </label>
-
-                                <input
-                                    type="number"
-                                    value={inputs.age}
-                                    onChange={(e) =>
-                                        handleInputChange(
-                                            'age',
-                                            e.target.value === ''
-                                                ? ''
-                                                : parseFloat(e.target.value)
-                                        )
-                                    }
-                                    className="w-full border p-2 rounded"
-                                    placeholder="Enter age"
-                                />
-                            </div>
-
-                            {/* GENDER */}
-                            <div>
-                                <label className="block font-semibold mb-1">
-                                    Gender
-                                </label>
-
-                                <select
-                                    value={inputs.gender}
-                                    onChange={(e) =>
-                                        handleInputChange(
-                                            'gender',
-                                            e.target.value
-                                        )
-                                    }
-                                    className="w-full border p-2 rounded"
-                                >
-                                    <option value="Male">Male</option>
-                                    <option value="Female">Female</option>
-                                </select>
-                            </div>
-
-                            {/* ACTIVITY */}
-                            <div>
-                                <label className="block font-semibold mb-1">
-                                    Activity Level
-                                </label>
-
-                                <select
-                                    value={inputs.activity}
-                                    onChange={(e) =>
-                                        handleInputChange(
-                                            'activity',
-                                            e.target.value
-                                        )
-                                    }
-                                    className="w-full border p-2 rounded"
-                                >
-                                    <option>Sedentary</option>
-                                    <option>Lightly Active</option>
-                                    <option>Moderately Active</option>
-                                    <option>Very Active</option>
-                                </select>
-                            </div>
-
-                            {/* GOAL */}
-                            <div>
-                                <label className="block font-semibold mb-1">
-                                    Goal
-                                </label>
-
-                                <select
-                                    value={inputs.goal}
-                                    onChange={(e) =>
-                                        handleInputChange(
-                                            'goal',
-                                            e.target.value
-                                        )
-                                    }
-                                    className="w-full border p-2 rounded"
-                                >
-                                    <option value="Loss">Weight Loss</option>
-                                    <option value="Maintenance">Maintenance</option>
-                                    <option value="Gain">Weight Gain</option>
-                                </select>
-                            </div>
-
-                            {/* BODY FAT EXTRA INPUTS */}
-                            {activeTab === 'fat' && (
-                                <>
-                                    <div>
-                                        <label className="block font-semibold mb-1">
-                                            Neck (cm)
-                                        </label>
-
-                                        <input
-                                            type="number"
-                                            value={inputs.neck}
-                                            onChange={(e) =>
-                                                handleInputChange(
-                                                    'neck',
-                                                    e.target.value === ''
-                                                        ? ''
-                                                        : parseFloat(e.target.value)
-                                                )
-                                            }
-                                            className="w-full border p-2 rounded"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block font-semibold mb-1">
-                                            Waist (cm)
-                                        </label>
-
-                                        <input
-                                            type="number"
-                                            value={inputs.waist}
-                                            onChange={(e) =>
-                                                handleInputChange(
-                                                    'waist',
-                                                    e.target.value === ''
-                                                        ? ''
-                                                        : parseFloat(e.target.value)
-                                                )
-                                            }
-                                            className="w-full border p-2 rounded"
-                                        />
-                                    </div>
-
-                                    {inputs.gender === 'Female' && (
-                                        <div>
-                                            <label className="block font-semibold mb-1">
-                                                Hip (cm)
-                                            </label>
-
-                                            <input
-                                                type="number"
-                                                value={inputs.hip}
-                                                onChange={(e) =>
-                                                    handleInputChange(
-                                                        'hip',
-                                                        e.target.value === ''
-                                                            ? ''
-                                                            : parseFloat(e.target.value)
-                                                    )
-                                                }
-                                                className="w-full border p-2 rounded"
-                                            />
-                                        </div>
-                                    )}
-                                </>
-                            )}
-
-                        </div>
-
-                        {/* OUTPUTS */}
-                        <div className="bg-white rounded-xl shadow p-6">
-
-                            {activeTab === 'bmi' && (
-                                <div>
-
-                                    <h2 className="text-3xl font-bold">
-                                        BMI: {bmi}
-                                    </h2>
-
-                                    <p
-                                        className={`mt-3 inline-block px-3 py-1 rounded ${bmiStatus.color}`}
-                                    >
-                                        {bmiStatus.name}
-                                    </p>
-
-                                </div>
-                            )}
-
-                            {activeTab === 'calorie' && (
-                                <h2 className="text-3xl font-bold">
-                                    {calorieTarget} kcal/day
-                                </h2>
-                            )}
-
-                            {activeTab === 'water' && (
-                                <h2 className="text-3xl font-bold">
-                                    {waterTarget} Liters/day
-                                </h2>
-                            )}
-
-                            {activeTab === 'protein' && (
-                                <h2 className="text-3xl font-bold">
-                                    {proteinTarget}g Protein/day
-                                </h2>
-                            )}
-
-                            {activeTab === 'fat' && (
-                                <h2 className="text-3xl font-bold">
-                                    {bodyFat}% Body Fat
-                                </h2>
-                            )}
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            )}
-
+    let tdee = Math.round(bmr * (factors[inputs.activity] || 1.2));
+
+    if (inputs.goal === "Loss") tdee -= 500;
+    if (inputs.goal === "Gain") tdee += 400;
+
+    return tdee;
+  }, [inputs]);
+
+  const waterTarget = React.useMemo(() => {
+    if (!inputs.weight) return "0.0";
+    return (inputs.weight * 0.035 + 0.4).toFixed(1);
+  }, [inputs.weight]);
+
+  const proteinTarget = React.useMemo(() => {
+    if (!inputs.weight) return 0;
+    return Math.round(inputs.weight * 1.6);
+  }, [inputs.weight]);
+
+  return (
+    <div className="space-y-8 page-transition">
+      {/* HEADER PANELS */}
+      <div className="border-b border-slate-100 dark:border-slate-800 pb-6">
+        <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white flex items-center gap-2">
+          <i className="fa-solid fa-calculator text-emerald-500"></i> Metabolic Calculator Engine
+        </h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
+          Calculate your Body Mass Index (BMI), customized baseline macro splits, and water optimization limits.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+        {/* INPUT PARAMETERS MATRIX */}
+        <div className="lg:col-span-3 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-4">
+          <h2 className="text-lg font-bold text-slate-800 dark:text-white mb-2">Biometric Parameters</h2>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-500">Weight (kg)</label>
+              <input
+                type="number"
+                placeholder="e.g. 70"
+                className="w-full border dark:border-slate-800 rounded-xl p-2.5 bg-transparent text-sm focus:ring-2 focus:ring-emerald-500/20"
+                value={inputs.weight}
+                onChange={e => handleInputChange("weight", e.target.value ? Number(e.target.value) : "")}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-500">Height (cm)</label>
+              <input
+                type="number"
+                placeholder="e.g. 175"
+                className="w-full border dark:border-slate-800 rounded-xl p-2.5 bg-transparent text-sm focus:ring-2 focus:ring-emerald-500/20"
+                value={inputs.height}
+                onChange={e => handleInputChange("height", e.target.value ? Number(e.target.value) : "")}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-500">Biological Age</label>
+              <input
+                type="number"
+                placeholder="e.g. 28"
+                className="w-full border dark:border-slate-800 rounded-xl p-2.5 bg-transparent text-sm focus:ring-2 focus:ring-emerald-500/20"
+                value={inputs.age}
+                onChange={e => handleInputChange("age", e.target.value ? Number(e.target.value) : "")}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-500">Gender Allocation</label>
+              <select
+                className="w-full border dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl p-2.5 text-sm"
+                value={inputs.gender}
+                onChange={e => handleInputChange("gender", e.target.value)}
+              >
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-500">Activity Multiplier (TDEE)</label>
+              <select
+                className="w-full border dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl p-2.5 text-sm"
+                value={inputs.activity}
+                onChange={e => handleInputChange("activity", e.target.value)}
+              >
+                <option value="Sedentary">Sedentary (Office job)</option>
+                <option value="Lightly Active">Lightly Active (1-2 days/wk)</option>
+                <option value="Moderately Active">Moderately Active (3-5 days/wk)</option>
+                <option value="Very Active">Very Active (6-7 days heavy workout)</option>
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-500">Primary Wellness Goal</label>
+              <select
+                className="w-full border dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl p-2.5 text-sm"
+                value={inputs.goal}
+                onChange={e => handleInputChange("goal", e.target.value)}
+              >
+                <option value="Maintenance">Maintenance Splitting</option>
+                <option value="Loss">Caloric Deficit (-500 kcal)</option>
+                <option value="Gain">Caloric Surplus (+400 kcal)</option>
+              </select>
+            </div>
+          </div>
         </div>
-    );
-};
 
-window.Calculators = Calculators;
+        {/* RESULTS METRIC BOXES */}
+        <div className="lg:col-span-2 bg-slate-50 dark:bg-slate-900/40 p-6 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 space-y-4">
+          <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-1.5">
+            <i className="fa-solid fa-square-poll-vertical text-emerald-500"></i> Calculated Output Profile
+          </h2>
+
+          <div className="grid grid-cols-2 gap-4">
+            {/* BMI CARD */}
+            <div className="bg-white dark:bg-slate-900 border p-4 rounded-xl shadow-sm text-center">
+              <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Body Mass Index</span>
+              <p className="text-2xl font-extrabold text-slate-800 dark:text-white mt-1">{bmi}</p>
+              <span className="text-[10px] text-emerald-500 font-medium">
+                {Number(bmi) === 0 ? "Pending" : Number(bmi) < 18.5 ? "Underweight" : Number(bmi) < 25 ? "Normal Range" : "Overweight"}
+              </span>
+            </div>
+
+            {/* TOTAL CALORIES TDEE CARD */}
+            <div className="bg-white dark:bg-slate-900 border p-4 rounded-xl shadow-sm text-center">
+              <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Daily Calorie Target</span>
+              <p className="text-2xl font-extrabold text-emerald-500 mt-1">{calorieTarget || "—"}</p>
+              <span className="text-[10px] text-slate-400 font-medium">kcal / day allocation</span>
+            </div>
+
+            {/* WATER TARGET CARD */}
+            <div className="bg-white dark:bg-slate-900 border p-4 rounded-xl shadow-sm text-center">
+              <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Hydration Threshold</span>
+              <p className="text-2xl font-extrabold text-blue-500 mt-1">{waterTarget}</p>
+              <span className="text-[10px] text-slate-400 font-medium">Liters / day limit</span>
+            </div>
+
+            {/* PROTEIN CARD */}
+            <div className="bg-white dark:bg-slate-900 border p-4 rounded-xl shadow-sm text-center">
+              <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Recommended Protein</span>
+              <p className="text-2xl font-extrabold text-indigo-500 mt-1">{proteinTarget || "—"}</p>
+              <span className="text-[10px] text-slate-400 font-medium">grams / day threshold</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

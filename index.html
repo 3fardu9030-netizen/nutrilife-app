@@ -1,343 +1,75 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- ========================= -->
-  <!-- META -->
-  <!-- ========================= -->
-  <meta charset="UTF-8" />
+  <title>NutriLife - Eat Smart, Live Healthy</title>
 
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  />
+  <meta name="description" content="NutriLife helps you calculate BMI, plan healthy diets, track nutrition habits and improve wellness.">
+  <meta name="theme-color" content="#10b981">
 
-  <title>
-    NutriLife - Eat Smart, Live Healthy
-  </title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- SEO -->
-  <meta
-    name="description"
-    content="NutriLife helps you calculate BMI, plan healthy diets, track nutrition habits, and improve wellness using AI-powered tools."
-  />
-
-  <meta
-    name="keywords"
-    content="nutrition, diet planner, bmi calculator, calorie calculator, healthy lifestyle, protein calculator, water tracker"
-  />
-
-  <meta
-    name="author"
-    content="NutriLife"
-  />
-
-  <meta
-    name="theme-color"
-    content="#10b981"
-  />
-
-  <!-- Open Graph -->
-  <meta
-    property="og:type"
-    content="website"
-  />
-
-  <meta
-    property="og:title"
-    content="NutriLife - Eat Smart, Live Healthy"
-  />
-
-  <meta
-    property="og:description"
-    content="AI-powered nutrition platform with BMI calculator, diet planning, health tracking, and nutrition awareness."
-  />
-
-  <!-- ========================= -->
-  <!-- GOOGLE FONTS -->
-  <!-- ========================= -->
-  <link
-    rel="preconnect"
-    href="https://fonts.googleapis.com"
-  />
-
-  <link
-    rel="preconnect"
-    href="https://fonts.gstatic.com"
-    crossorigin
-  />
-
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
-    rel="stylesheet"
-  />
-
-  <!-- ========================= -->
-  <!-- TAILWIND CSS -->
-  <!-- ========================= -->
   <script src="https://cdn.tailwindcss.com"></script>
-
   <script>
     tailwind.config = {
-      darkMode: 'class',
-
+      darkMode: "class",
       theme: {
         extend: {
-
           fontFamily: {
-            sans: ['Inter', 'sans-serif']
-          },
-
-          colors: {
-            emerald: {
-              50: '#ecfdf5',
-              100: '#d1fae5',
-              200: '#a7f3d0',
-              300: '#6ee7b7',
-              400: '#34d399',
-              500: '#10b981',
-              600: '#059669',
-              700: '#047857',
-              800: '#065f46',
-              900: '#064e3b'
-            }
+            sans: ["Inter", "sans-serif"]
           }
         }
       }
-    };
+    }
   </script>
 
-  <!-- ========================= -->
-  <!-- FONT AWESOME -->
-  <!-- ========================= -->
-  <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-  />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="css/styles.css">
 
-  <!-- ========================= -->
-  <!-- CUSTOM CSS -->
-  <!-- ========================= -->
-  <link
-    rel="stylesheet"
-    href="css/styles.css"
-  />
-
-  <!-- ========================= -->
-  <!-- REACT -->
-  <!-- ========================= -->
-  <script
-    src="https://unpkg.com/react@18/umd/react.development.js"
-    crossorigin
-  ></script>
-
-  <script
-    src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"
-    crossorigin
-  ></script>
-
-  <!-- ========================= -->
-  <!-- BABEL -->
-  <!-- ========================= -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-  <!-- ========================= -->
-  <!-- APEX CHARTS -->
-  <!-- ========================= -->
   <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-
-  <!-- ========================= -->
-  <!-- SUPABASE -->
-  <!-- ========================= -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- ========================= -->
-  <!-- PWA MANIFEST -->
-  <!-- ========================= -->
-  <link
-    rel="manifest"
-    href="manifest.json"
-    id="manifest-placeholder"
-  />
-
 </head>
 
-<body class="bg-slate-50 text-slate-800 transition-colors duration-300">
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-50 min-h-screen transition-colors duration-200">
 
-  <!-- ========================= -->
-  <!-- ROOT -->
-  <!-- ========================= -->
   <div id="root">
-
-    <!-- LOADER -->
-    <div
-      id="initial-loader"
-      class="flex flex-col items-center justify-center min-h-screen bg-slate-50"
-    >
-
-      <div class="relative w-24 h-24 flex items-center justify-center">
-
-        <div
-          class="absolute w-20 h-20 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin"
-        ></div>
-
-        <div
-          class="absolute w-14 h-14 rounded-full border-4 border-emerald-300 border-b-transparent animate-spin"
-          style="animation-direction: reverse; animation-duration: 1.5s;"
-        ></div>
-
-        <i class="fa-solid fa-leaf text-3xl text-emerald-500 animate-pulse"></i>
-
+    <div id="initial-loader" class="flex flex-col items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-200">
+      <div class="text-emerald-500 text-5xl animate-spin mb-4">
+        <i class="fa-solid fa-leaf"></i>
       </div>
-
-      <h1
-        class="mt-6 text-3xl font-bold tracking-wider text-slate-800"
-      >
-        NUTRILIFE
+      <h1 class="text-3xl font-black tracking-tight text-slate-800 dark:text-white uppercase">
+        NutriLife
       </h1>
-
-      <p
-        class="mt-2 text-sm text-emerald-600 animate-pulse"
-      >
+      <p class="text-emerald-600 dark:text-emerald-400 font-semibold text-xs mt-1.5 tracking-wide uppercase">
         Nurturing a healthier you...
       </p>
-
     </div>
-
   </div>
 
-  <!-- ========================= -->
-  <!-- DYNAMIC MANIFEST -->
-  <!-- ========================= -->
-  <script>
-
-    const manifest = {
-
-      name: "NutriLife Nutrition App",
-
-      short_name: "NutriLife",
-
-      start_url: "./",
-
-      display: "standalone",
-
-      background_color: "#0f172a",
-
-      theme_color: "#10b981",
-
-      description: "AI-powered nutrition awareness platform.",
-
-      icons: [
-        {
-          src: "https://cdn-icons-png.flaticon.com/512/3076/3076134.png",
-          sizes: "512x512",
-          type: "image/png"
-        }
-      ]
-    };
-
-    const stringManifest = JSON.stringify(manifest);
-
-    const blob = new Blob(
-      [stringManifest],
-      { type: 'application/json' }
-    );
-
-    const manifestURL = URL.createObjectURL(blob);
-
-    document
-      .querySelector('#manifest-placeholder')
-      .setAttribute('href', manifestURL);
-
-  </script>
-
-  <!-- ========================= -->
-  <!-- LOAD DATA -->
-  <!-- ========================= -->
-  <script
-    type="text/babel"
-    src="js/data/nutritionData.js"
-  ></script>
-
-  <!-- ========================= -->
-  <!-- SUPABASE CONFIG -->
-  <!-- MUST LOAD BEFORE COMPONENTS -->
-  <!-- ========================= -->
   <script src="js/supabase.js"></script>
 
-  <!-- ========================= -->
-  <!-- COMPONENTS -->
-  <!-- ========================= -->
-  <script
-    type="text/babel"
-    src="js/components/Navbar.js"
-  ></script>
+  <script type="text/babel" data-runtime="classic" src="js/components/Navbar.js"></script>
+  <script type="text/babel" data-runtime="classic" src="js/components/Footer.js"></script>
+  <script type="text/babel" data-runtime="classic" src="js/components/Home.js"></script>
+  <script type="text/babel" data-runtime="classic" src="js/components/Encyclopedia.js"></script>
+  <script type="text/babel" data-runtime="classic" src="js/components/Planner.js"></script>
+  <script type="text/babel" data-runtime="classic" src="js/components/Tracker.js"></script>
+  <script type="text/babel" data-runtime="classic" src="js/components/Alerts.js"></script>
+  <script type="text/babel" data-runtime="classic" src="js/components/Schedule.js"></script>
+  <script type="text/babel" data-runtime="classic" src="js/components/Calculators.js"></script>
+  <script type="text/babel" data-runtime="classic" src="js/components/Admin.js"></script>
+  <script type="text/babel" data-runtime="classic" src="js/components/Blog.js"></script>
+  <script type="text/babel" data-runtime="classic" src="js/components/Chat.js"></script>
 
-  <script
-    type="text/babel"
-    src="js/components/Footer.js"
-  ></script>
-
-  <script
-    type="text/babel"
-    src="js/components/Home.js"
-  ></script>
-
-  <script
-    type="text/babel"
-    src="js/components/Encyclopedia.js"
-  ></script>
-
-  <script
-    type="text/babel"
-    src="js/components/Planner.js"
-  ></script>
-
-  <script
-    type="text/babel"
-    src="js/components/Tracker.js"
-  ></script>
-
-  <script
-    type="text/babel"
-    src="js/components/Alerts.js"
-  ></script>
-
-  <script
-    type="text/babel"
-    src="js/components/Schedule.js"
-  ></script>
-
-  <script
-    type="text/babel"
-    src="js/components/Calculators.js"
-  ></script>
-
-  <script
-    type="text/babel"
-    src="js/components/Admin.js"
-  ></script>
-
-  <script
-    type="text/babel"
-    src="js/components/Blog.js"
-  ></script>
-
-  <script
-    type="text/babel"
-    src="js/components/Chat.js"
-  ></script>
-
-  <!-- ========================= -->
-  <!-- MAIN APP -->
-  <!-- MUST LOAD LAST -->
-  <!-- ========================= -->
-  <script
-    type="text/babel"
-    src="js/app.js"
-  ></script>
+  <script type="text/babel" data-runtime="classic" src="js/app.js"></script>
 
 </body>
-
 </html>

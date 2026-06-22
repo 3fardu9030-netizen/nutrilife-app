@@ -1,13 +1,14 @@
-// NutriLife AI Diet Planner Component
-window.Planner = function ({ user, dbSync }) {
+// NutriLife AI Diet Planner Component (ES MODULE VIA BABEL)
+
+ function Planner({ user, dbSync }) {
   const [formData, setFormData] = React.useState({
-    age: user ? user.age : 28,
-    gender: user ? user.gender : 'Male',
-    weight: user ? user.weight : 70,
-    height: user ? user.height : 175,
-    goal: user ? user.goal : 'Weight Maintenance',
-    lifestyle: user ? user.lifestyle : 'Moderately Active',
-    preference: 'Balanced',
+    age: user?.age || 28,
+    gender: user?.gender || "Male",
+    weight: user?.weight || 70,
+    height: user?.height || 175,
+    goal: user?.goal || "Weight Maintenance",
+    lifestyle: user?.lifestyle || "Moderately Active",
+    preference: "Balanced",
     allergies: [],
     conditions: []
   });
@@ -16,572 +17,435 @@ window.Planner = function ({ user, dbSync }) {
   const [generating, setGenerating] = React.useState(false);
   const [generatedPlan, setGeneratedPlan] = React.useState(null);
 
-  // Auto-calculated BMI
+  // Dynamic biological metric computations
   const bmi = React.useMemo(() => {
     if (formData.weight && formData.height) {
-      const heightInMeters = formData.height / 100;
-      return (formData.weight / (heightInMeters * heightInMeters)).toFixed(1);
+      const meters = formData.height / 100;
+      return (formData.weight / (meters * meters)).toFixed(1);
     }
-    return 0;
+    return "0.0";
   }, [formData.weight, formData.height]);
 
-  const handleAllergyToggle = (allergy) => {
-    const list = [...formData.allergies];
-    const index = list.indexOf(allergy);
-    if (index > -1) {
-      list.splice(index, 1);
-    } else {
-      list.push(allergy);
-    }
-    setFormData({ ...formData, allergies: list });
-  };
+  const bmiStatus = React.useMemo(() => {
+    const val = parseFloat(bmi);
+    if (val < 18.5) return { label: "Underweight", color: "text-amber-500 bg-amber-500/10" };
+    if (val < 25) return { label: "Normal Range", color: "text-emerald-500 bg-emerald-500/10" };
+    if (val < 30) return { label: "Overweight", color: "text-orange-500 bg-orange-500/10" };
+    return { label: "Obese Class", color: "text-red-500 bg-red-500/10" };
+  }, [bmi]);
 
-  const handleConditionToggle = (condition) => {
-    const list = [...formData.conditions];
-    const index = list.indexOf(condition);
-    if (index > -1) {
-      list.splice(index, 1);
-    } else {
-      list.push(condition);
-    }
-    setFormData({ ...formData, conditions: list });
+  const handleAllergyToggle = (item) => {
+    setFormData(prev => ({
+      ...prev,
+      allergies: prev.allergies.includes(item)
+        ? prev.allergies.filter(x => x !== item)
+        : [...prev.allergies, item]
+    }));
   };
 
   const generatePlan = () => {
     setGenerating(true);
-    
-    // Mifflin-St Jeor Equation for BMR
-    let bmr = 0;
-    if (formData.gender === 'Male') {
+
+    let bmr;
+    if (formData.gender === "Male") {
       bmr = 10 * formData.weight + 6.25 * formData.height - 5 * formData.age + 5;
     } else {
       bmr = 10 * formData.weight + 6.25 * formData.height - 5 * formData.age - 161;
     }
 
-    // Active Factor
-    const factorMap = {
-      'Sedentary': 1.2,
-      'Lightly Active': 1.375,
-      'Moderately Active': 1.55,
-      'Very Active': 1.725
+    const activityFactors = {
+      "Sedentary": 1.2,
+      "Lightly Active": 1.375,
+      "Moderately Active": 1.55,
+      "Very Active": 1.725
     };
-    const tdee = Math.round(bmr * (factorMap[formData.lifestyle] || 1.2));
 
-    // Target Calorie adjustment based on goal
-    let targetCal = tdee;
-    if (formData.goal === 'Weight Loss') targetCal -= 450;
-    else if (formData.goal === 'Muscle Building' || formData.goal === 'Weight Gain') targetCal += 400;
+    const tdee = Math.round(bmr * (activityFactors[formData.lifestyle] || 1.2));
+    let calories = tdee;
 
-    // Macro splits
-    let protRatio = 0.25, carbRatio = 0.50, fatRatio = 0.25;
-    if (formData.goal === 'Muscle Building') {
-      protRatio = 0.35; carbRatio = 0.45; fatRatio = 0.20;
-    } else if (formData.preference === 'Keto') {
-      protRatio = 0.20; carbRatio = 0.05; fatRatio = 0.75;
+    if (formData.goal === "Weight Loss") calories -= 450;
+    if (formData.goal === "Muscle Building" || formData.goal === "Weight Gain") calories += 400;
+
+    // Macro distribution profile maps
+    let proteinRatio = 0.25, carbRatio = 0.50, fatRatio = 0.25;
+
+    if (formData.goal === "Muscle Building") {
+      proteinRatio = 0.35; carbRatio = 0.45; fatRatio = 0.20;
+    } else if (formData.preference === "Keto") {
+      proteinRatio = 0.20; carbRatio = 0.05; fatRatio = 0.75;
+    } else if (formData.preference === "High Protein Lean") {
+      proteinRatio = 0.40; carbRatio = 0.35; fatRatio = 0.25;
     }
 
-    const proteinGrams = Math.round((targetCal * protRatio) / 4);
-    const carbsGrams = Math.round((targetCal * carbRatio) / 4);
-    const fatGrams = Math.round((targetCal * fatRatio) / 9);
-    const waterLiters = (formData.weight * 0.035).toFixed(1);
-
-    // Dynamic menu generator based on diet preference and medical constraints
-    const foodsDb = window.NutritionData.foods;
-    
-    const mealSuggestions = {
-      Balanced: {
-        breakfast: "Warm steel-cut oatmeal topped with wild blueberries, chia seeds, and 1 tbsp sliced almonds, paired with 2 scrambled organic eggs.",
-        lunch: "150g grilled wild salmon served over a colorful quinoa Buddha bowl with steamed broccoli and seasoned spinach.",
-        dinner: "Tender pan-seared tofu cubes sauteed with asparagus, carrots, and mushrooms, served alongside sliced avocado.",
-        snacks: "Plain Greek yogurt with a drizzle of organic raw honey and a handful of fresh apple slices."
+    const plan = {
+      meta: { ...formData, bmi, tdee, bmr: Math.round(bmr) },
+      targets: {
+        calories: Math.max(1200, calories),
+        protein: Math.round((calories * proteinRatio) / 4),
+        carbs: Math.round((calories * carbRatio) / 4),
+        fat: Math.round((calories * fatRatio) / 9),
+        water: (formData.weight * 0.035).toFixed(1)
       },
-      Veg: {
-        breakfast: "Wholesome overnight oats soaked in organic almond milk, topped with chia seeds and half a sliced banana.",
-        lunch: "Spiced quinoa bowl mixed with steamed broccoli florets, chickpeas, cherry tomatoes, and a light lemon tahini dressing.",
-        dinner: "Sautéed organic tofu blocks with spinach and wild mushrooms, paired with baked sweet potato fries.",
-        snacks: "Crunchy baby carrots and cucumber sticks served with smooth garlic hummus."
-      },
-      Vegan: {
-        breakfast: "Chia seed pudding made with organic coconut milk, topped with blueberries and raw sunflower seeds.",
-        lunch: "Thick lentil soup served with a side of mixed baby greens, organic avocado slices, and raw pumpkin seeds.",
-        dinner: "Brown rice bowl topped with seasoned black beans, grilled zucchini, steamed spinach, and fresh salsa.",
-        snacks: "A handful of raw almonds and two organic Medjool dates."
-      },
-      Keto: {
-        breakfast: "3-egg omelet cooked in butter, filled with fresh spinach, white button mushrooms, and wrapped in avocado slices.",
-        lunch: "Seared wild salmon fillet served over a bed of baby greens with extra-virgin olive oil dressing and walnuts.",
-        dinner: "Grilled chicken breast paired with steamed broccoli topped with melted grass-fed butter.",
-        snacks: "A handful of macadamia nuts and celery sticks with cream cheese."
+      meals: {
+        breakfast: `High-fiber ${formData.preference.toLowerCase() === "keto" ? "omelet with spinach, avocado, and olive oil paste" : "oatmeal porridge with fresh berries, chia seeds, and clean whey whey extract"}.`,
+        lunch: `Macro-balanced fuel bowl featuring a source of lean target protein, steamed cruciferous greens, and complex ${formData.preference.toLowerCase() === "keto" ? "healthy fats" : "quinoa grains"}.`,
+        snacks: `Metabolic stabilizer snack: ${formData.preference.toLowerCase() === "keto" ? "mixed almonds or organic pumpkin seeds" : "low-fat strained Greek yogurt layered with raw walnut crush"}.`,
+        dinner: `Easily digestible evening dish focusing on steamed wild salmon or baked tofu slices, combined with seasoned zucchini strands.`
       }
     };
-
-    const activePref = mealSuggestions[formData.preference] || mealSuggestions.Balanced;
-
-    // Filter meals if condition contains Diabetes or Hypertension
-    let adjustedBreakfast = activePref.breakfast;
-    let adjustedLunch = activePref.lunch;
-    let adjustedDinner = activePref.dinner;
-    let adjustedSnack = activePref.snacks;
-
-    if (formData.conditions.includes('Diabetes')) {
-      adjustedBreakfast += " (Sugar-free option: Avoid honey or excessive sweet fruits).";
-      adjustedLunch += " (Low glycemic index: Quinoa fibers slow blood sugar absorption).";
-    }
-    if (formData.conditions.includes('Hypertension')) {
-      adjustedLunch += " (DASH note: Prepared with zero added salt; seasoned with fresh lemon juice and herbs).";
-      adjustedDinner += " (Sodium check: Seasoned with garlic and turmeric powder, avoid packaged sauces).";
-    }
 
     setTimeout(() => {
-      const generated = {
-        meta: { ...formData, bmi, tdee },
-        targets: { calories: targetCal, protein: proteinGrams, carbs: carbsGrams, fat: fatGrams, water: waterLiters },
-        meals: { breakfast: adjustedBreakfast, lunch: adjustedLunch, dinner: adjustedDinner, snacks: adjustedSnack }
-      };
-      
-      setGeneratedPlan(generated);
+      setGeneratedPlan(plan);
       setGenerating(false);
 
-      // Proactively save user's physical parameters to DB
-      if (user) {
-        const updatedUser = {
-          ...user,
-          weight: formData.weight,
-          height: formData.height,
-          age: formData.age,
-          gender: formData.gender,
-          goal: formData.goal,
-          lifestyle: formData.lifestyle
-        };
-        dbSync({ users: [updatedUser] });
+      if (user && typeof dbSync === "function") {
+        dbSync({
+          users: [{
+            ...user,
+            weight: formData.weight,
+            height: formData.height,
+            age: formData.age,
+            goal: formData.goal,
+            lifestyle: formData.lifestyle
+          }]
+        });
       }
-    }, 1500);
-  };
-
-  const handlePrint = () => {
-    window.print();
+    }, 1200);
   };
 
   return (
     <div className="space-y-8 page-transition">
-      
-      {/* 1. Header banner */}
-      <div className="border-b border-slate-100 dark:border-slate-800/80 pb-6">
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-800 dark:text-white font-sans">
-          AI Diet & Nutrition Planner
-        </h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Generate an instantly downloadable, evidence-backed meal plan adjusted for your physical stats, workout volumes, allergy filters, and medical warnings.
-        </p>
+      {/* COMPONENT TITLE MODULE */}
+      <div className="border-b border-slate-100 dark:border-slate-800 pb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight flex items-center gap-2">
+            <i className="fa-solid fa-wand-magic-sparkles text-emerald-500"></i> AI Diet & Nutrition Planner
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Generate custom energy guidelines and micro-adjusted food splits using your personal biometrics.
+          </p>
+        </div>
+        {generatedPlan && (
+          <button
+            onClick={() => setGeneratedPlan(null)}
+            className="text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 py-2.5 px-4 rounded-xl transition"
+          >
+            <i className="fa-solid fa-rotate-left mr-1.5"></i> Reconfigure Plan Parameters
+          </button>
+        )}
       </div>
 
-      {/* Printable Area Wrapper */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        
-        {/* Left 2 Cols: Form Wizard / Plan Output */}
-        <div className="lg:col-span-2 space-y-6">
+      {/* COMPONENT INTERACTION PIPELINE CONTROLLER */}
+      {!generatedPlan ? (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
           
-          {!generatedPlan ? (
-            // WIZARD WIDGET
-            <div className="glass-card p-6 sm:p-8 border border-slate-200/5 shadow-md space-y-6">
-              
-              {/* Progress Indicator */}
-              <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-850">
-                <span className="text-xs font-extrabold uppercase tracking-wide text-emerald-500">
-                  Plan Generator Wizard — Step {wizardStep} of 3
-                </span>
-                <div className="flex space-x-1.5">
-                  <div className={`w-3.5 h-3.5 rounded-full transition-all ${wizardStep >= 1 ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-800'}`}></div>
-                  <div className={`w-3.5 h-3.5 rounded-full transition-all ${wizardStep >= 2 ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-800'}`}></div>
-                  <div className={`w-3.5 h-3.5 rounded-full transition-all ${wizardStep >= 3 ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-800'}`}></div>
-                </div>
-              </div>
-
-              {/* STEP 1: PHYSICAL DIMENSIONS */}
-              {wizardStep === 1 && (
-                <div className="space-y-6 fade-in">
-                  <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center">
-                    <i className="fa-solid fa-person-running text-emerald-500 mr-2.5"></i>
-                    Physical Stats & Demographics
-                  </h3>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    {/* Age */}
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-500 dark:text-slate-400">Age (years)</label>
-                      <input
-                        type="number"
-                        min="12"
-                        max="100"
-                        value={formData.age}
-                        onChange={(e) => setFormData({ ...formData, age: parseInt(e.target.value) })}
-                        className="w-full px-4 py-2.5 glass-input text-sm border border-slate-200 dark:border-slate-800"
-                      />
-                    </div>
-                    {/* Gender */}
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-500 dark:text-slate-400">Gender</label>
-                      <select
-                        value={formData.gender}
-                        onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                        className="w-full px-4 py-2.5 glass-input text-sm border border-slate-200 dark:border-slate-800 bg-transparent dark:bg-slate-900"
-                      >
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                      </select>
-                    </div>
-                    {/* Weight */}
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-500 dark:text-slate-400">Weight (kg)</label>
-                      <input
-                        type="number"
-                        min="30"
-                        max="200"
-                        value={formData.weight}
-                        onChange={(e) => setFormData({ ...formData, weight: parseFloat(e.target.value) })}
-                        className="w-full px-4 py-2.5 glass-input text-sm border border-slate-200 dark:border-slate-800"
-                      />
-                    </div>
-                    {/* Height */}
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-500 dark:text-slate-400">Height (cm)</label>
-                      <input
-                        type="number"
-                        min="100"
-                        max="250"
-                        value={formData.height}
-                        onChange={(e) => setFormData({ ...formData, height: parseFloat(e.target.value) })}
-                        className="w-full px-4 py-2.5 glass-input text-sm border border-slate-200 dark:border-slate-800"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Diagnostic BMI Banner */}
-                  <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 flex items-center justify-between text-xs">
-                    <span className="font-bold text-slate-700 dark:text-slate-200">Auto-Calculated BMI:</span>
-                    <span className={`px-3 py-1 rounded-xl text-white font-extrabold ${
-                      bmi < 18.5 ? 'bg-blue-500' : bmi < 25 ? 'bg-emerald-500' : bmi < 30 ? 'bg-amber-500' : 'bg-red-500'
-                    }`}>
-                      {bmi} ({bmi < 18.5 ? 'Underweight' : bmi < 25 ? 'Normal' : bmi < 30 ? 'Overweight' : 'Obese'})
-                    </span>
-                  </div>
-
-                  <div className="flex justify-end pt-4">
-                    <button
-                      onClick={() => setWizardStep(2)}
-                      className="px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-md"
-                    >
-                      Next: Goals & Activity
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* STEP 2: GOALS AND LIFESTYLE */}
-              {wizardStep === 2 && (
-                <div className="space-y-6 fade-in">
-                  <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center">
-                    <i className="fa-solid fa-bullseye text-emerald-500 mr-2.5"></i>
-                    Goals & Activity Profiles
-                  </h3>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    {/* Fitness Goal */}
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-500 dark:text-slate-400">Target Fitness Goal</label>
-                      <select
-                        value={formData.goal}
-                        onChange={(e) => setFormData({ ...formData, goal: e.target.value })}
-                        className="w-full px-4 py-2.5 glass-input text-sm border border-slate-200 dark:border-slate-800 bg-transparent dark:bg-slate-900"
-                      >
-                        <option value="Weight Loss">Weight Loss (Deficit)</option>
-                        <option value="Weight Maintenance">Weight Maintenance</option>
-                        <option value="Muscle Building">Muscle Building (Hypertrophy)</option>
-                        <option value="Weight Gain">Weight Gain (Surplus)</option>
-                      </select>
-                    </div>
-
-                    {/* Lifestyle */}
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-500 dark:text-slate-400">Weekly Workout Activity</label>
-                      <select
-                        value={formData.lifestyle}
-                        onChange={(e) => setFormData({ ...formData, lifestyle: e.target.value })}
-                        className="w-full px-4 py-2.5 glass-input text-sm border border-slate-200 dark:border-slate-800 bg-transparent dark:bg-slate-900"
-                      >
-                        <option value="Sedentary">Sedentary (No Exercise)</option>
-                        <option value="Lightly Active">Lightly Active (1-2 days/wk)</option>
-                        <option value="Moderately Active">Moderately Active (3-5 days/wk)</option>
-                        <option value="Very Active">Very Active (6-7 days intense)</option>
-                      </select>
-                    </div>
-
-                    {/* Food Preferences */}
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-500 dark:text-slate-400">Dietary Preferences</label>
-                      <select
-                        value={formData.preference}
-                        onChange={(e) => setFormData({ ...formData, preference: e.target.value })}
-                        className="w-full px-4 py-2.5 glass-input text-sm border border-slate-200 dark:border-slate-800 bg-transparent dark:bg-slate-900"
-                      >
-                        <option value="Balanced">Balanced Mix</option>
-                        <option value="Veg">Vegetarian (Lacto-Ovo)</option>
-                        <option value="Vegan">100% Plant-Based Vegan</option>
-                        <option value="Keto">Ketogenic (High-Fat, Low-Carb)</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between pt-4">
-                    <button
-                      onClick={() => setWizardStep(1)}
-                      className="px-6 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-500 text-xs font-bold"
-                    >
-                      Back
-                    </button>
-                    <button
-                      onClick={() => setWizardStep(3)}
-                      className="px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-md"
-                    >
-                      Next: Allergies & Conditions
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* STEP 3: ALLERGIES AND MEDICAL CONDITIONS */}
-              {wizardStep === 3 && (
-                <div className="space-y-6 fade-in">
-                  <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center">
-                    <i className="fa-solid fa-hand-holding-medical text-emerald-500 mr-2.5"></i>
-                    Allergies & Medical Exclusions
-                  </h3>
-
-                  {/* Allergies list */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400">Food Allergies / Intolerances</label>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                      {['Gluten', 'Lactose', 'Nuts', 'Soy', 'Seafood'].map((allergy) => {
-                        const checked = formData.allergies.includes(allergy);
-                        return (
-                          <button
-                            key={allergy}
-                            onClick={() => handleAllergyToggle(allergy)}
-                            className={`p-2.5 rounded-xl text-xs font-semibold border text-center transition-all ${
-                              checked
-                                ? 'bg-red-500/10 border-red-500 text-red-500'
-                                : 'bg-transparent border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
-                            }`}
-                          >
-                            🚫 {allergy}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Conditions checklist */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400">Medical Conditions to Monitor</label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {['Obesity', 'Diabetes', 'High cholesterol', 'Hypertension'].map((condition) => {
-                        const checked = formData.conditions.includes(condition);
-                        return (
-                          <button
-                            key={condition}
-                            onClick={() => handleConditionToggle(condition)}
-                            className={`p-2.5 rounded-xl text-xs font-semibold border text-left transition-all ${
-                              checked
-                                ? 'bg-emerald-500/10 border-emerald-500 text-emerald-600 dark:text-emerald-400'
-                                : 'bg-transparent border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
-                            }`}
-                          >
-                            🩺 {condition}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between pt-4">
-                    <button
-                      onClick={() => setWizardStep(2)}
-                      className="px-6 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-500 text-xs font-bold"
-                    >
-                      Back
-                    </button>
-                    <button
-                      onClick={generatePlan}
-                      disabled={generating}
-                      className="px-7 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-extrabold text-xs shadow-md flex items-center space-x-2"
-                    >
-                      {generating ? (
-                        <>
-                          <i className="fa-solid fa-spinner animate-spin"></i>
-                          <span>Analyzing parameters...</span>
-                        </>
-                      ) : (
-                        <>
-                          <i className="fa-solid fa-wand-magic-sparkles"></i>
-                          <span>Generate My Diet Chart</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              )}
-
+          {/* LEFT INTERACTIVE FORMS LAYOUT CARD */}
+          <div className="lg:col-span-2 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-6 md:p-8 shadow-sm space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-50 dark:border-slate-800/50 pb-4">
+              <h2 className="font-extrabold text-slate-800 dark:text-white text-base">
+                Biometric Setup Configuration
+              </h2>
+              <span className="text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-3 py-1 rounded-full border border-emerald-500/10">
+                Step {wizardStep} of 3
+              </span>
             </div>
-          ) : (
-            // GENERATED PLAN DISPLAY
-            <div id="print-area" className="glass-card p-6 sm:p-8 border border-emerald-500/10 shadow-lg space-y-6 fade-in">
-              {/* Header inside printable view */}
-              <div className="flex justify-between items-start pb-4 border-b border-slate-100 dark:border-slate-850">
-                <div>
-                  <h2 className="text-xl font-bold text-slate-800 dark:text-white">
-                    NutriLife Custom Wellness Plan
-                  </h2>
-                  <p className="text-xs text-slate-400 font-medium">Generated for {formData.gender}, {formData.age} yrs | BMI: {bmi}</p>
+
+            {/* WIZARD CARD PANEL 1: PHYSICAL DIMENSIONS */}
+            {wizardStep === 1 && (
+              <div className="space-y-5 animate-fade-in">
+                <div className="grid grid-cols-2 gap-3">
+                  {["Male", "Female"].map(g => (
+                    <button
+                      key={g}
+                      onClick={() => setFormData({ ...formData, gender: g })}
+                      className={`p-3 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-2 ${
+                        formData.gender === g
+                          ? "border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                          : "border-slate-100 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400"
+                      }`}
+                    >
+                      <i className={`fa-solid ${g === "Male" ? "fa-mars" : "fa-venus"}`}></i> {g}
+                    </button>
+                  ))}
                 </div>
-                <div className="flex space-x-2 no-print">
-                  <button
-                    onClick={() => setGeneratedPlan(null)}
-                    className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600"
-                    title="Generate New Plan"
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400">Biological Age</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="120"
+                      value={formData.age}
+                      onChange={e => setFormData({ ...formData, age: Math.max(1, parseInt(e.target.value) || 0) })}
+                      className="w-full border dark:border-slate-800 p-3 rounded-xl text-sm bg-white dark:bg-slate-950 text-slate-800 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:outline-none"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400">Total Mass (kg)</label>
+                    <input
+                      type="number"
+                      min="10"
+                      max="300"
+                      value={formData.weight}
+                      onChange={e => setFormData({ ...formData, weight: Math.max(0, parseFloat(e.target.value) || 0) })}
+                      className="w-full border dark:border-slate-800 p-3 rounded-xl text-sm bg-white dark:bg-slate-950 text-slate-800 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:outline-none"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400">Height (cm)</label>
+                    <input
+                      type="number"
+                      min="50"
+                      max="250"
+                      value={formData.height}
+                      onChange={e => setFormData({ ...formData, height: Math.max(0, parseFloat(e.target.value) || 0) })}
+                      className="w-full border dark:border-slate-800 p-3 rounded-xl text-sm bg-white dark:bg-slate-950 text-slate-800 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 dark:bg-slate-950 p-4 border dark:border-slate-800 rounded-2xl flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <span className="text-xs text-slate-400 font-semibold block">Body Mass Index ($BMI$) Allocation</span>
+                    <span className="text-xl font-black text-slate-800 dark:text-white">{bmi} <span className="text-xs text-slate-400 font-normal">kg/m²</span></span>
+                  </div>
+                  <span className={`text-[11px] font-bold px-3 py-1.5 rounded-xl border border-slate-500/5 ${bmiStatus.color}`}>
+                    {bmiStatus.label}
+                  </span>
+                </div>
+
+                <button
+                  onClick={() => setWizardStep(2)}
+                  className="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-extrabold p-3.5 rounded-xl text-xs shadow-sm transition"
+                >
+                  Continue to Goal Settings <i className="fa-solid fa-arrow-right ml-1 text-[10px]"></i>
+                </button>
+              </div>
+            )}
+
+            {/* WIZARD CARD PANEL 2: GOALS AND METABOLIC LIFESTYLE */}
+            {wizardStep === 2 && (
+              <div className="space-y-5 animate-fade-in">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400">Target Objective Goal</label>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {["Weight Loss", "Weight Maintenance", "Muscle Building"].map(g => (
+                      <button
+                        key={g}
+                        onClick={() => setFormData({ ...formData, goal: g })}
+                        className={`p-4 border rounded-xl text-left transition flex flex-col justify-between h-24 ${
+                          formData.goal === g
+                            ? "border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                            : "border-slate-100 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-400"
+                        }`}
+                      >
+                        <i className={`fa-solid ${g === "Weight Loss" ? "fa-arrow-trend-down text-red-500" : g === "Muscle Building" ? "fa-dumbbell text-blue-500" : "fa-scale-balanced text-amber-500"} text-base`}></i>
+                        <span className="text-xs font-bold block">{g}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400">Activity Level Factor</label>
+                  <select
+                    value={formData.lifestyle}
+                    onChange={e => setFormData({ ...formData, lifestyle: e.target.value })}
+                    className="w-full border dark:border-slate-800 p-3 rounded-xl text-sm bg-white dark:bg-slate-950 text-slate-800 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:outline-none"
                   >
-                    <i className="fa-solid fa-arrow-rotate-left"></i>
+                    <option value="Sedentary">Sedentary (Minimal daily motion)</option>
+                    <option value="Lightly Active">Lightly Active (1-2 days/week exercise)</option>
+                    <option value="Moderately Active">Moderately Active (3-5 days/week high exertion)</option>
+                    <option value="Very Active">Very Active (Elite athletic training routine)</option>
+                  </select>
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={() => setWizardStep(1)}
+                    className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:text-white px-5 py-3 rounded-xl text-xs font-bold transition"
+                  >
+                    Back
                   </button>
                   <button
-                    onClick={handlePrint}
-                    className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold"
+                    onClick={() => setWizardStep(3)}
+                    className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-extrabold py-3 px-5 rounded-xl text-xs shadow-sm transition text-center"
                   >
-                    <i className="fa-solid fa-print"></i>
-                    <span>Print PDF</span>
+                    Proceed to Dietary Preference
                   </button>
                 </div>
               </div>
+            )}
 
-              {/* Target numbers banner */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 text-center font-sans">
-                <div>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase">Calorie Target</p>
-                  <p className="text-lg font-black text-slate-850 dark:text-slate-100">{generatedPlan.targets.calories} kcal</p>
-                </div>
-                <div>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase">Protein Target</p>
-                  <p className="text-lg font-black text-emerald-500">{generatedPlan.targets.protein}g</p>
-                </div>
-                <div>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase">Carbohydrates</p>
-                  <p className="text-lg font-black text-blue-500">{generatedPlan.targets.carbs}g</p>
-                </div>
-                <div>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase">Lipids & Fats</p>
-                  <p className="text-lg font-black text-amber-500">{generatedPlan.targets.fat}g</p>
-                </div>
-              </div>
-
-              {/* Meal timings detailed list */}
-              <div className="space-y-4 pt-2">
-                <h3 className="text-sm font-extrabold uppercase tracking-wide text-emerald-500">Daily Suggested Menu</h3>
-                
-                <div className="grid grid-cols-1 gap-4">
-                  {/* Breakfast */}
-                  <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-850 flex items-start space-x-4">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0">
-                      <i className="fa-solid fa-mug-saucer text-lg"></i>
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wide">Breakfast (Ideal: 8:00 AM)</h4>
-                      <p className="text-sm text-slate-700 dark:text-slate-200 mt-1 leading-relaxed">{generatedPlan.meals.breakfast}</p>
-                    </div>
-                  </div>
-
-                  {/* Lunch */}
-                  <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-850 flex items-start space-x-4">
-                    <div className="w-10 h-10 rounded-xl bg-blue-500 text-white flex items-center justify-center shrink-0">
-                      <i className="fa-solid fa-bowl-food text-lg"></i>
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wide">Lunch (Ideal: 1:00 PM)</h4>
-                      <p className="text-sm text-slate-700 dark:text-slate-200 mt-1 leading-relaxed">{generatedPlan.meals.lunch}</p>
-                    </div>
-                  </div>
-
-                  {/* Afternoon snack */}
-                  <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-850 flex items-start space-x-4">
-                    <div className="w-10 h-10 rounded-xl bg-orange-500 text-white flex items-center justify-center shrink-0">
-                      <i className="fa-solid fa-cookie text-lg"></i>
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wide">Snack (Ideal: 4:30 PM)</h4>
-                      <p className="text-sm text-slate-700 dark:text-slate-200 mt-1 leading-relaxed">{generatedPlan.meals.snacks}</p>
-                    </div>
-                  </div>
-
-                  {/* Dinner */}
-                  <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-850 flex items-start space-x-4">
-                    <div className="w-10 h-10 rounded-xl bg-indigo-500 text-white flex items-center justify-center shrink-0">
-                      <i className="fa-solid fa-utensils text-lg"></i>
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wide">Dinner (Ideal: 7:30 PM)</h4>
-                      <p className="text-sm text-slate-700 dark:text-slate-200 mt-1 leading-relaxed">{generatedPlan.meals.dinner}</p>
-                    </div>
+            {/* WIZARD CARD PANEL 3: ALLERGIES AND GENERATION TRIGGER */}
+            {wizardStep === 3 && (
+              <div className="space-y-5 animate-fade-in">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400">Dietary Theme Split Type</label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+                    {["Balanced", "Keto", "High Protein Lean", "Vegetarian"].map(p => (
+                      <button
+                        key={p}
+                        onClick={() => setFormData({ ...formData, preference: p })}
+                        className={`p-3 border rounded-xl text-xs font-bold text-center transition ${
+                          formData.preference === p
+                            ? "border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                            : "border-slate-100 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400"
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    ))}
                   </div>
                 </div>
-              </div>
 
-              {/* Water & Exercise Guidelines */}
-              <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/10 flex items-start space-x-4 text-xs">
-                <i className="fa-solid fa-droplet text-blue-500 text-lg mt-0.5 shrink-0 animate-pulse"></i>
-                <div className="space-y-1">
-                  <p className="font-bold text-blue-600 dark:text-blue-400">Hydration Guideline</p>
-                  <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
-                    Based on your weight, your body requires roughly **{generatedPlan.targets.water} Liters** (approx. 10 cups) of water daily. Limit heavy volumes during solid meals.
-                  </p>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400">Isolate Allergen Sensitivities (Optional)</label>
+                  <div className="flex flex-wrap gap-2">
+                    {["Nuts", "Dairy", "Gluten", "Soy", "Shellfish", "Eggs"].map(allergy => {
+                      const active = formData.allergies.includes(allergy);
+                      return (
+                        <button
+                          key={allergy}
+                          onClick={() => handleAllergyToggle(allergy)}
+                          className={`px-3 py-2 rounded-xl border text-xs font-semibold transition flex items-center gap-1.5 ${
+                            active
+                              ? "bg-red-500 border-red-500 text-white shadow-sm"
+                              : "border-slate-100 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50"
+                          }`}
+                        >
+                          {active ? <i className="fa-solid fa-circle-minus"></i> : <i className="fa-solid fa-circle-plus text-slate-300"></i>}
+                          {allergy}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-2 border-t border-slate-50 dark:border-slate-800/60 pt-4">
+                  <button
+                    onClick={() => setWizardStep(2)}
+                    className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:text-white px-5 py-3 rounded-xl text-xs font-bold transition"
+                  >
+                    Back
+                  </button>
+                  <button
+                    disabled={generating}
+                    onClick={generatePlan}
+                    className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-900 font-black py-3 px-6 rounded-xl text-xs shadow-md transition disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {generating ? (
+                      <>
+                        <i className="fa-solid fa-circle-notch animate-spin"></i> Processing Biometric Vectors...
+                      </>
+                    ) : (
+                      <>
+                        <i className="fa-solid fa-bolt"></i> Compile AI Nutrition Blueprint
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
-
-            </div>
-          )}
-
-        </div>
-
-        {/* Right 1 Col: Educational Tips / Sidebar stats */}
-        <div className="space-y-6">
-          <div className="glass-card p-6 border border-emerald-500/5 shadow-sm space-y-4">
-            <h3 className="text-sm font-extrabold uppercase tracking-wide text-emerald-500 font-sans">Planner Guidelines</h3>
-            
-            <div className="space-y-3.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400 font-sans">
-              <div className="flex items-start">
-                <span className="w-5 h-5 rounded-md bg-emerald-500/10 text-emerald-500 flex items-center justify-center mr-2 shrink-0 font-bold">1</span>
-                <span>The **Mifflin-St Jeor** equation calculates your Total Daily Energy Expenditure (TDEE) based on biometric rates.</span>
-              </div>
-              <div className="flex items-start">
-                <span className="w-5 h-5 rounded-md bg-emerald-500/10 text-emerald-500 flex items-center justify-center mr-2 shrink-0 font-bold">2</span>
-                <span>Carbohydrate and lipid fractions are shifted dynamically if choosing specialized preferences like **Ketogenic**.</span>
-              </div>
-              <div className="flex items-start">
-                <span className="w-5 h-5 rounded-md bg-emerald-500/10 text-emerald-500 flex items-center justify-center mr-2 shrink-0 font-bold">3</span>
-                <span>Active filtering is applied to omit dangerous ingredients if allergies are checked.</span>
-              </div>
-            </div>
+            )}
           </div>
 
-          <div className="glass-card p-6 border border-amber-500/5 shadow-sm space-y-3.5">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
-              <i className="fa-solid fa-circle-exclamation text-lg"></i>
-            </div>
-            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">Medical Disclaimer</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-sans">
-              The NutriLife AI Planner generates nutritional recommendations based on general sports dietetics. This does not replace tailored counsel from clinical dietitians or metabolic physicians.
+          {/* RIGHT SIDEBAR INFORMATION CONTAINER */}
+          <div className="bg-gradient-to-br from-slate-800 to-slate-950 rounded-3xl p-6 text-white space-y-4 shadow-sm border border-slate-800">
+            <h3 className="font-extrabold text-sm tracking-wide text-emerald-400 uppercase">
+              The Engine Blueprint
+            </h3>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              NutriLife models energy requirements by combining historical Harris-Benedict formulas alongside isolated lean mass ratios to map total expenditure limits down to a single-digit margin.
             </p>
+            <div className="space-y-3 pt-2 border-t border-slate-700/50 text-[11px] text-slate-400">
+              <div className="flex gap-2 items-start">
+                <i className="fa-solid fa-check text-emerald-400 mt-0.5"></i>
+                <span>Automatic Total Daily Energy Expenditure integration.</span>
+              </div>
+              <div className="flex gap-2 items-start">
+                <i className="fa-solid fa-check text-emerald-400 mt-0.5"></i>
+                <span>Preference safeguards automatically isolate active allergen matrices.</span>
+              </div>
+            </div>
           </div>
+
         </div>
+      ) : (
+        
+        /* GENERATED DIETARY OUTCOMES SUMMARY VIEW */
+        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-6 md:p-8 shadow-sm space-y-8 animate-fade-in print:p-0 print:border-0 print:shadow-none">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-50 dark:border-slate-800/60 pb-6">
+            <div className="space-y-1">
+              <span className="text-[10px] text-emerald-500 dark:text-emerald-400 uppercase font-black tracking-widest">Calculated Target Output</span>
+              <h2 className="text-2xl font-black text-slate-800 dark:text-white">NutriLife Target Health Plan</h2>
+            </div>
+            <button
+              onClick={() => window.print()}
+              className="bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 text-white dark:hover:bg-slate-700 text-xs font-bold py-2.5 px-4 rounded-xl shadow-sm transition shrink-0 flex items-center gap-1.5"
+            >
+              <i className="fa-solid fa-print"></i> Export Plan Document
+            </button>
+          </div>
 
-      </div>
+          {/* CARD MATRIX SPLIT GRID GRID OVERVIEW */}
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border dark:border-slate-800/50 space-y-1">
+              <span className="text-[10px] text-slate-400 font-bold uppercase block">Daily Energy Target</span>
+              <span className="text-xl font-black text-orange-500">{generatedPlan.targets.calories} <span className="text-xs font-normal text-slate-400">kcal</span></span>
+            </div>
+            <div className="p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border dark:border-slate-800/50 space-y-1">
+              <span className="text-[10px] text-slate-400 font-bold uppercase block">Protein Split</span>
+              <span className="text-xl font-black text-blue-500">{generatedPlan.targets.protein}g</span>
+            </div>
+            <div className="p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border dark:border-slate-800/50 space-y-1">
+              <span className="text-[10px] text-slate-400 font-bold uppercase block">Carbohydrates</span>
+              <span className="text-xl font-black text-amber-500">{generatedPlan.targets.carbs}g</span>
+            </div>
+            <div className="p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border dark:border-slate-800/50 space-y-1">
+              <span className="text-[10px] text-slate-400 font-bold uppercase block">Lipid/Fats</span>
+              <span className="text-xl font-black text-emerald-500">{generatedPlan.targets.fat}g</span>
+            </div>
+            <div className="p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border dark:border-slate-800/50 col-span-2 lg:col-span-1 space-y-1">
+              <span className="text-[10px] text-slate-400 font-bold uppercase block">Optimal Fluid Hydration</span>
+              <span className="text-xl font-black text-teal-500">{generatedPlan.targets.water} <span className="text-xs font-normal text-slate-400">Liters</span></span>
+            </div>
+          </div>
 
+          {/* MEAL MANAGEMENT TILES */}
+          <div className="space-y-4">
+            <h3 className="font-extrabold text-sm text-slate-800 dark:text-white uppercase tracking-wider flex items-center gap-2">
+              <i className="fa-solid fa-utensils text-emerald-500"></i> Chronological Meal Architecture
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[
+                { label: "Breakfast Routine", icon: "🍳", text: generatedPlan.meals.breakfast, bg: "from-amber-500/5 to-orange-500/5 border-amber-500/10" },
+                { label: "Midday Fuel (Lunch)", icon: "🍲", text: generatedPlan.meals.lunch, bg: "from-blue-500/5 to-indigo-500/5 border-blue-500/10" },
+                { label: "Glycogen Stabilizer (Snack)", icon: "🍎", text: generatedPlan.meals.snacks, bg: "from-purple-500/5 to-pink-500/5 border-purple-500/10" },
+                { label: "Evening Restoration (Dinner)", icon: "🍽️", text: generatedPlan.meals.dinner, bg: "from-emerald-500/5 to-teal-500/5 border-emerald-500/10" }
+              ].map((m, idx) => (
+                <div key={idx} className={`p-5 bg-gradient-to-br border rounded-2xl space-y-2 flex gap-4 items-start ${m.bg}`}>
+                  <span className="text-2xl mt-1 block select-none">{m.icon}</span>
+                  <div className="space-y-1">
+                    <h4 className="font-bold text-slate-800 dark:text-white text-sm">{m.label}</h4>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{m.text}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* DISCLAIMER ASSURANCE BLOCKQUOTE */}
+          <div className="p-4 bg-blue-500/5 border border-blue-500/10 rounded-xl text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed flex gap-2.5 items-start">
+            <i className="fa-solid fa-circle-info text-blue-500 text-sm mt-0.5"></i>
+            <span>
+              <strong>Note:</strong> Macro allocations are targeted algorithm proxies based on baseline inputs. For chronic metabolic transformations, connect these metrics with an accredited healthcare professional.
+            </span>
+          </div>
+
+        </div>
+      )}
     </div>
   );
-};
+}

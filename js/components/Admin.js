@@ -1,395 +1,261 @@
-// NutriLife Secure Admin Control Center Component
-window.Admin = function ({ user, customFoods, blogs, comments, dbSync }) {
-  const [activeAdminSubTab, setActiveAdminSubTab] = React.useState('analytics');
-  
-  // Forms States
+// NutriLife Secure Admin Control Center Component (ES MODULE VIA BABEL)
+
+ function Admin({ user, customFoods, blogs, comments, dbSync }) {
+  const [activeAdminSubTab, setActiveAdminSubTab] = React.useState("analytics");
+
   const [foodForm, setFoodForm] = React.useState({
-    name: '', category: 'Fruits', calories: 60, carbs: 12, protein: 1, fat: 0,
-    vitamins: 'Vitamin C, Fiber', benefits: 'Highly nutritious, improves metabolism',
-    bestTime: 'Morning', quantity: '1 portion daily', sideEffects: '',
-    image: 'https://images.unsplash.com/photo-1550258987-190a2d41a8ba?auto=format&fit=crop&q=80&w=600'
+    name: "",
+    category: "Fruits",
+    calories: 60,
+    carbs: 12,
+    protein: 1,
+    fat: 0,
+    vitamins: "Vitamin C, Fiber",
+    benefits: "Highly nutritious, improves metabolism",
+    bestTime: "Morning",
+    quantity: "1 portion daily",
+    sideEffects: "",
+    image: "https://images.unsplash.com/photo-1550258987-190a2d41a8ba"
   });
 
   const [articleForm, setArticleForm] = React.useState({
-    title: '', category: 'Recipes', author: 'Dr. Evelyn Reed (PhD)', readTime: '5 min read',
-    excerpt: 'Quick premium wellness recipes...', content: '',
-    image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600'
+    title: "",
+    category: "Recipes",
+    author: "Dr. Evelyn Reed (PhD)",
+    readTime: "5 min read",
+    excerpt: "Quick premium wellness recipes...",
+    content: "",
+    image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c"
   });
 
-  // Render Admin Analytics Chart using ApexCharts
+  // ANALYTICS CHART
   React.useEffect(() => {
-    if (activeAdminSubTab === 'analytics') {
-      const timer = setTimeout(() => {
+    if (activeAdminSubTab === "analytics") {
+      setTimeout(() => {
         const chartDom = document.querySelector("#admin-analytics-chart");
+
         if (chartDom) {
           chartDom.innerHTML = "";
-          const options = {
-            series: [{
-              name: 'Page Interactions',
-              data: [450, 620, 580, 890, 1200, 1150, 1400]
-            }, {
-              name: 'Active Habit Loggers',
-              data: [32, 45, 50, 75, 80, 92, 105]
-            }],
+
+          const chart = new ApexCharts(chartDom, {
+            series: [
+              {
+                name: "Page Interactions",
+                data: [450, 620, 580, 890, 1200, 1150, 1400]
+              },
+              {
+                name: "Active Habit Loggers",
+                data: [32, 45, 50, 75, 80, 92, 105]
+              }
+            ],
             chart: {
               height: 280,
-              type: 'area',
-              fontFamily: 'Outfit, sans-serif',
+              type: "area",
               toolbar: { show: false }
             },
-            colors: ['#10b981', '#3b82f6'],
-            stroke: { curve: 'smooth', width: 3 },
+            colors: ["#10b981", "#3b82f6"],
+            stroke: {
+              curve: "smooth"
+            },
             xaxis: {
-              categories: ['May 16', 'May 17', 'May 18', 'May 19', 'May 20', 'May 21', 'May 22'],
-              labels: { style: { colors: document.documentElement.classList.contains('dark') ? '#cbd5e1' : '#475569' } }
-            },
-            yaxis: {
-              labels: { style: { colors: document.documentElement.classList.contains('dark') ? '#cbd5e1' : '#475569' } }
-            },
-            tooltip: { theme: document.documentElement.classList.contains('dark') ? 'dark' : 'light' }
-          };
-          const chart = new ApexCharts(chartDom, options);
+              categories: ["May 16", "May 17", "May 18", "May 19", "May 20", "May 21", "May 22"]
+            }
+          });
           chart.render();
         }
       }, 100);
-      return () => clearTimeout(timer);
     }
   }, [activeAdminSubTab]);
 
-  // Food Form Mutators
+  // ADD FOOD
   const handleFoodSubmit = (e) => {
     e.preventDefault();
+    if (!foodForm.name) return alert("Please enter a food name");
+
     const newFood = {
-      id: foodForm.name.toLowerCase().replace(/ /g, '-'),
-      name: foodForm.name,
-      category: foodForm.category,
-      calories: parseInt(foodForm.calories) || 0,
-      carbs: parseFloat(foodForm.carbs) || 0,
-      protein: parseFloat(foodForm.protein) || 0,
-      fat: parseFloat(foodForm.fat) || 0,
-      vitamins: foodForm.vitamins.split(',').map(s => s.trim()),
-      benefits: foodForm.benefits.split(',').map(s => s.trim()),
-      bestTime: foodForm.bestTime,
-      quantity: foodForm.quantity,
-      sideEffects: foodForm.sideEffects,
-      image: foodForm.image
+      id: foodForm.name.toLowerCase().replace(/ /g, "-"),
+      ...foodForm,
+      calories: Number(foodForm.calories),
+      protein: Number(foodForm.protein),
+      carbs: Number(foodForm.carbs),
+      fat: Number(foodForm.fat),
+      vitamins: typeof foodForm.vitamins === "string" ? foodForm.vitamins.split(",").map(v => v.trim()) : foodForm.vitamins,
+      benefits: typeof foodForm.benefits === "string" ? foodForm.benefits.split(",").map(b => b.trim()) : foodForm.benefits
     };
 
-    // Prepend to standard foods array (in-memory app state and dbSync writeback)
-    window.NutritionData.foods.unshift(newFood);
-    const updatedFoodsList = [...customFoods, newFood];
-    dbSync({ customFoods: updatedFoodsList });
+    if (window.NutritionData) {
+      window.NutritionData.foods.unshift(newFood);
+    }
 
-    // Reset Form
-    setFoodForm({
-      name: '', category: 'Fruits', calories: 60, carbs: 12, protein: 1, fat: 0,
-      vitamins: 'Vitamin C, Fiber', benefits: 'Highly nutritious, improves metabolism',
-      bestTime: 'Morning', quantity: '1 portion daily', sideEffects: '',
-      image: 'https://images.unsplash.com/photo-1550258987-190a2d41a8ba?auto=format&fit=crop&q=80&w=600'
+    dbSync({
+      customFoods: [...customFoods, newFood]
     });
-    alert("New food item successfully cataloged into database!");
+
+    alert(`${foodForm.name} added successfully!`);
+    setFoodForm({
+      name: "", category: "Fruits", calories: 60, carbs: 12, protein: 1, fat: 0,
+      vitamins: "Vitamin C, Fiber", benefits: "Highly nutritious", bestTime: "Morning",
+      quantity: "1 portion daily", sideEffects: "", image: "https://images.unsplash.com/photo-1550258987-190a2d41a8ba"
+    });
   };
 
-  // Blog Form Mutators
+  // ADD BLOG
   const handleBlogSubmit = (e) => {
     e.preventDefault();
+    if (!articleForm.title) return alert("Please enter a title");
+
     const newBlog = {
-      id: blogs.length + 4, // unique ID
-      title: articleForm.title,
-      category: articleForm.category,
-      author: articleForm.author,
-      readTime: articleForm.readTime,
-      excerpt: articleForm.excerpt,
-      content: articleForm.content,
-      image: articleForm.image,
-      date: new Date().toISOString().split('T')[0]
+      id: blogs.length + 1,
+      ...articleForm,
+      date: new Date().toISOString().split("T")[0]
     };
 
-    // Prepend to memory dataset & sync
-    window.NutritionData.articles.unshift(newBlog);
-    const updatedBlogsList = [...blogs, newBlog];
-    dbSync({ blogs: updatedBlogsList });
+    if (window.NutritionData) {
+      window.NutritionData.articles.unshift(newBlog);
+    }
 
-    // Reset Form
-    setArticleForm({
-      title: '', category: 'Recipes', author: 'Dr. Evelyn Reed (PhD)', readTime: '5 min read',
-      excerpt: 'Quick premium wellness recipes...', content: '',
-      image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600'
+    dbSync({
+      blogs: [...blogs, newBlog]
     });
-    alert("Article successfully published to blogs section!");
+
+    alert("Article published successfully!");
+    setArticleForm({
+      title: "", category: "Recipes", author: "Dr. Evelyn Reed (PhD)",
+      readTime: "5 min read", excerpt: "Quick premium wellness recipes...", content: "",
+      image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c"
+    });
   };
 
-  // Comments moderation mutators
-  const handleDeleteComment = (cmtId) => {
-    const updatedComments = comments.filter(c => c.id !== cmtId);
-    dbSync({ comments: updatedComments });
+  const handleDeleteComment = (id) => {
+    dbSync({
+      comments: comments.filter(c => c.id !== id)
+    });
   };
 
   return (
-    <div className="space-y-8 page-transition">
-      {/* Title Header */}
-      <div className="border-b border-slate-100 dark:border-slate-800/80 pb-6">
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-800 dark:text-white font-sans">
-          Secure Admin Control Panel
+    <div className="space-y-8 bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
+      <div>
+        <h1 className="text-3xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+          <i className="fa-solid fa-shield-halved text-emerald-500"></i> Secure Control Panel
         </h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Catalog fresh whole foods, publish scientific articles, moderate user comment flows, and inspect system traffic metrics.
-        </p>
+        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Manage food catalog, articles, and logs.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
-        
-        {/* Left Column: Side Tabs */}
-        <div className="lg:col-span-1 space-y-2">
-          <button
-            onClick={() => setActiveAdminSubTab('analytics')}
-            className={`w-full p-3.5 rounded-2xl border text-left flex items-center space-x-3 transition-all ${
-              activeAdminSubTab === 'analytics' ? 'border-emerald-500 bg-emerald-500/10' : 'border-slate-200 dark:border-slate-805 bg-white dark:bg-slate-900'
-            }`}
-          >
-            <i className="fa-solid fa-chart-line text-emerald-500 text-sm"></i>
-            <span className="text-xs font-bold">Interactions Analytics</span>
-          </button>
-          <button
-            onClick={() => setActiveAdminSubTab('add-food')}
-            className={`w-full p-3.5 rounded-2xl border text-left flex items-center space-x-3 transition-all ${
-              activeAdminSubTab === 'add-food' ? 'border-emerald-500 bg-emerald-500/10' : 'border-slate-200 dark:border-slate-805 bg-white dark:bg-slate-900'
-            }`}
-          >
-            <i className="fa-solid fa-square-plus text-emerald-500 text-sm"></i>
-            <span className="text-xs font-bold">Catalog Foods (CRUD)</span>
-          </button>
-          <button
-            onClick={() => setActiveAdminSubTab('add-blog')}
-            className={`w-full p-3.5 rounded-2xl border text-left flex items-center space-x-3 transition-all ${
-              activeAdminSubTab === 'add-blog' ? 'border-emerald-500 bg-emerald-500/10' : 'border-slate-200 dark:border-slate-805 bg-white dark:bg-slate-900'
-            }`}
-          >
-            <i className="fa-solid fa-file-pen text-emerald-500 text-sm"></i>
-            <span className="text-xs font-bold">Publish Articles</span>
-          </button>
-          <button
-            onClick={() => setActiveAdminSubTab('comments')}
-            className={`w-full p-3.5 rounded-2xl border text-left flex items-center space-x-3 transition-all ${
-              activeAdminSubTab === 'comments' ? 'border-emerald-500 bg-emerald-500/10' : 'border-slate-200 dark:border-slate-805 bg-white dark:bg-slate-900'
-            }`}
-          >
-            <i className="fa-solid fa-comments text-emerald-500 text-sm"></i>
-            <span className="text-xs font-bold">Moderate Comments</span>
-          </button>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        {/* SIDE NAV TAB SELECTOR */}
+        <div className="flex flex-row lg:flex-col overflow-x-auto lg:overflow-visible gap-2 border-b lg:border-b-0 pb-3 lg:pb-0">
+          {[
+            { id: "analytics", label: "Analytics", icon: "fa-chart-pie" },
+            { id: "add-food", label: "Add Food", icon: "fa-apple-whole" },
+            { id: "add-blog", label: "Publish Blog", icon: "fa-pen-to-square" },
+            { id: "comments", label: "Comments", icon: "fa-comments" }
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveAdminSubTab(tab.id)}
+              className={`p-3 rounded-xl flex items-center gap-3 font-medium text-sm transition whitespace-nowrap w-full min-w-[140px] lg:min-w-0 ${
+                activeAdminSubTab === tab.id
+                  ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400"
+                  : "text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800/50"
+              }`}
+            >
+              <i className={`fa-solid ${tab.icon}`}></i>
+              {tab.label}
+            </button>
+          ))}
         </div>
 
-        {/* Right Columns: Active admin panels */}
-        <div className="lg:col-span-3 space-y-6">
-          
-          {/* TAB 1: TRAFFIC ANALYTICS */}
-          {activeAdminSubTab === 'analytics' && (
-            <div className="space-y-6 fade-in">
-              <div className="glass-card p-6 border border-emerald-500/5 shadow-md space-y-4">
-                <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center">
-                  <i className="fa-solid fa-chart-area text-emerald-500 mr-2.5"></i> Platform Traffic Overview
-                </h3>
-                <div id="admin-analytics-chart" className="w-full"></div>
-              </div>
-
-              {/* Platform metrics grids */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="glass-card p-5 border border-slate-200/5 shadow-sm text-center">
-                  <p className="text-[10px] text-slate-400 font-bold uppercase">Total Food database</p>
-                  <p className="text-3xl font-black text-emerald-500 mt-1">{window.NutritionData.foods.length}</p>
-                </div>
-                <div className="glass-card p-5 border border-slate-200/5 shadow-sm text-center">
-                  <p className="text-[10px] text-slate-400 font-bold uppercase">Dynamic Articles</p>
-                  <p className="text-3xl font-black text-blue-500 mt-1">{window.NutritionData.articles.length}</p>
-                </div>
-                <div className="glass-card p-5 border border-slate-200/5 shadow-sm text-center">
-                  <p className="text-[10px] text-slate-400 font-bold uppercase">Active logs saved</p>
-                  <p className="text-3xl font-black text-amber-500 mt-1">{customFoods.length + blogs.length + comments.length + 12}</p>
-                </div>
-              </div>
+        {/* CONTAINER MAIN ELEMENT */}
+        <div className="lg:col-span-3 min-h-[350px]">
+          {activeAdminSubTab === "analytics" && (
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-slate-800 dark:text-white">Traffic & Engagement Analytics</h2>
+              <div id="admin-analytics-chart" className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-100 dark:border-slate-800"></div>
             </div>
           )}
 
-          {/* TAB 2: CATALOG FOODS FORM */}
-          {activeAdminSubTab === 'add-food' && (
-            <div className="glass-card p-6 border border-emerald-500/5 shadow-md space-y-6 fade-in">
-              <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center">
-                <i className="fa-solid fa-square-plus text-emerald-500 mr-2.5"></i> Catalog New Nutrient Item
-              </h3>
-
-              <form onSubmit={handleFoodSubmit} className="space-y-4 text-xs font-sans">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="font-bold text-slate-500">Food Name</label>
-                    <input type="text" required placeholder="e.g. Pineapple" value={foodForm.name} onChange={(e) => setFoodForm({ ...foodForm, name: e.target.value })} className="w-full px-3 py-2.5 glass-input border" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="font-bold text-slate-500">Category</label>
-                    <select value={foodForm.category} onChange={(e) => setFoodForm({ ...foodForm, category: e.target.value })} className="w-full px-3 py-2.5 glass-input border bg-transparent dark:bg-slate-900">
-                      <option value="Fruits">Fruits</option>
-                      <option value="Vegetables">Vegetables</option>
-                      <option value="Grains">Grains</option>
-                      <option value="Protein sources">Protein sources</option>
-                      <option value="Dairy products">Dairy products</option>
-                      <option value="Nuts & seeds">Nuts & seeds</option>
-                      <option value="Superfoods">Superfoods</option>
-                      <option value="Traditional healthy foods">Traditional healthy foods</option>
-                    </select>
-                  </div>
+          {activeAdminSubTab === "add-food" && (
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-slate-800 dark:text-white">Add Database Entry</h2>
+              <form onSubmit={handleFoodSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-500">Food Name</label>
+                  <input className="w-full border dark:border-slate-700 rounded-xl p-2.5 bg-transparent" placeholder="e.g. Avocado" value={foodForm.name} onChange={e => setFoodForm({ ...foodForm, name: e.target.value })} />
                 </div>
-
-                <div className="grid grid-cols-4 gap-2.5">
-                  <div className="space-y-1.5">
-                    <label className="font-bold text-slate-400">Calories (kcal)</label>
-                    <input type="number" value={foodForm.calories} onChange={(e) => setFoodForm({ ...foodForm, calories: e.target.value })} className="w-full px-2 py-2 glass-input border text-center" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="font-bold text-slate-400">Carbs (g)</label>
-                    <input type="number" step="0.1" value={foodForm.carbs} onChange={(e) => setFoodForm({ ...foodForm, carbs: e.target.value })} className="w-full px-2 py-2 glass-input border text-center" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="font-bold text-slate-400">Protein (g)</label>
-                    <input type="number" step="0.1" value={foodForm.protein} onChange={(e) => setFoodForm({ ...foodForm, protein: e.target.value })} className="w-full px-2 py-2 glass-input border text-center" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="font-bold text-slate-400">Fat (g)</label>
-                    <input type="number" step="0.1" value={foodForm.fat} onChange={(e) => setFoodForm({ ...foodForm, fat: e.target.value })} className="w-full px-2 py-2 glass-input border text-center" />
-                  </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-500">Category</label>
+                  <select className="w-full border dark:border-slate-700 rounded-xl p-2.5 bg-white dark:bg-slate-900" value={foodForm.category} onChange={e => setFoodForm({ ...foodForm, category: e.target.value })}>
+                    <option>Fruits</option><option>Vegetables</option><option>Grains</option><option>Proteins</option><option>Superfoods</option>
+                  </select>
                 </div>
-
-                <div className="space-y-1.5">
-                  <label className="font-bold text-slate-500">Vitamins (comma separated)</label>
-                  <input type="text" placeholder="e.g. Vitamin C, Manganese, Folates" value={foodForm.vitamins} onChange={(e) => setFoodForm({ ...foodForm, vitamins: e.target.value })} className="w-full px-3 py-2.5 glass-input border" />
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-500">Calories (kcal)</label>
+                  <input type="number" className="w-full border dark:border-slate-700 rounded-xl p-2.5 bg-transparent" value={foodForm.calories} onChange={e => setFoodForm({ ...foodForm, calories: e.target.value })} />
                 </div>
-
-                <div className="space-y-1.5">
-                  <label className="font-bold text-slate-500">Health Benefits (comma separated)</label>
-                  <input type="text" placeholder="e.g. Increases digest speed, rich in antioxidants" value={foodForm.benefits} onChange={(e) => setFoodForm({ ...foodForm, benefits: e.target.value })} className="w-full px-3 py-2.5 glass-input border" />
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-500">Carbs (g)</label>
+                  <input type="number" className="w-full border dark:border-slate-700 rounded-xl p-2.5 bg-transparent" value={foodForm.carbs} onChange={e => setFoodForm({ ...foodForm, carbs: e.target.value })} />
                 </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="font-bold text-slate-500">Best Time to Consume</label>
-                    <input type="text" placeholder="Morning / Snacks" value={foodForm.bestTime} onChange={(e) => setFoodForm({ ...foodForm, bestTime: e.target.value })} className="w-full px-3 py-2.5 glass-input border" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="font-bold text-slate-500">Recommended Quantity</label>
-                    <input type="text" placeholder="1 slice daily" value={foodForm.quantity} onChange={(e) => setFoodForm({ ...foodForm, quantity: e.target.value })} className="w-full px-3 py-2.5 glass-input border" />
-                  </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-500">Protein (g)</label>
+                  <input type="number" className="w-full border dark:border-slate-700 rounded-xl p-2.5 bg-transparent" value={foodForm.protein} onChange={e => setFoodForm({ ...foodForm, protein: e.target.value })} />
                 </div>
-
-                <div className="space-y-1.5">
-                  <label className="font-bold text-slate-500">Warning of Overconsumption</label>
-                  <input type="text" placeholder="Excess can cause mild flatulence..." value={foodForm.sideEffects} onChange={(e) => setFoodForm({ ...foodForm, sideEffects: e.target.value })} className="w-full px-3 py-2.5 glass-input border" />
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-500">Fat (g)</label>
+                  <input type="number" className="w-full border dark:border-slate-700 rounded-xl p-2.5 bg-transparent" value={foodForm.fat} onChange={e => setFoodForm({ ...foodForm, fat: e.target.value })} />
                 </div>
-
-                <div className="space-y-1.5">
-                  <label className="font-bold text-slate-500">Food Image Link (Unsplash URL)</label>
-                  <input type="url" value={foodForm.image} onChange={(e) => setFoodForm({ ...foodForm, image: e.target.value })} className="w-full px-3 py-2.5 glass-input border" />
+                <div className="md:col-span-2 space-y-1">
+                  <label className="text-xs font-semibold text-slate-500">Vitamins & Minerals (Comma Separated)</label>
+                  <input className="w-full border dark:border-slate-700 rounded-xl p-2.5 bg-transparent" placeholder="Vitamin E, Potassium, Iron" value={foodForm.vitamins} onChange={e => setFoodForm({ ...foodForm, vitamins: e.target.value })} />
                 </div>
-
-                <div className="flex justify-end pt-3">
-                  <button type="submit" className="px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold shadow-md shadow-emerald-500/20">
-                    Add Food to Encyclopedia
-                  </button>
+                <div className="md:col-span-2">
+                  <button type="submit" className="bg-emerald-500 hover:bg-emerald-600 text-white font-medium px-6 py-2.5 rounded-xl transition shadow-md shadow-emerald-500/10">Add Food Item</button>
                 </div>
               </form>
             </div>
           )}
 
-          {/* TAB 3: PUBLISH ARTICLES FORM */}
-          {activeAdminSubTab === 'add-blog' && (
-            <div className="glass-card p-6 border border-emerald-500/5 shadow-md space-y-6 fade-in">
-              <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center">
-                <i className="fa-solid fa-file-pen text-emerald-500 mr-2.5"></i> Publish Health & Recipe Article
-              </h3>
-
-              <form onSubmit={handleBlogSubmit} className="space-y-4 text-xs font-sans">
-                <div className="space-y-1.5">
-                  <label className="font-bold text-slate-500">Article Title</label>
-                  <input type="text" required placeholder="e.g. The Science of Intermittent Fasting" value={articleForm.title} onChange={(e) => setArticleForm({ ...articleForm, title: e.target.value })} className="w-full px-3 py-2.5 glass-input border" />
+          {activeAdminSubTab === "add-blog" && (
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-slate-800 dark:text-white">Publish Editorial Content</h2>
+              <form onSubmit={handleBlogSubmit} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-500">Article Title</label>
+                  <input className="w-full border dark:border-slate-700 rounded-xl p-2.5 bg-transparent" placeholder="The Power of Intermittent Nutrition" value={articleForm.title} onChange={e => setArticleForm({ ...articleForm, title: e.target.value })} />
                 </div>
-
-                <div className="grid grid-cols-3 gap-2.5">
-                  <div className="space-y-1.5">
-                    <label className="font-bold text-slate-505">Category</label>
-                    <select value={articleForm.category} onChange={(e) => setArticleForm({ ...articleForm, category: e.target.value })} className="w-full px-3 py-2 glass-input border bg-transparent dark:bg-slate-900">
-                      <option value="Recipes">Recipes</option>
-                      <option value="Nutrition Basics">Nutrition Basics</option>
-                      <option value="Superfoods">Superfoods</option>
-                      <option value="Lifestyle & Hydration">Lifestyle & Hydration</option>
-                    </select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="font-bold text-slate-500">Author</label>
-                    <input type="text" value={articleForm.author} onChange={(e) => setArticleForm({ ...articleForm, author: e.target.value })} className="w-full px-3 py-2 glass-input border" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="font-bold text-slate-500">Read Time (e.g. 5 min)</label>
-                    <input type="text" value={articleForm.readTime} onChange={(e) => setArticleForm({ ...articleForm, readTime: e.target.value })} className="w-full px-3 py-2 glass-input border" />
-                  </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-500">Content Body</label>
+                  <textarea rows="4" className="w-full border dark:border-slate-700 rounded-xl p-2.5 bg-transparent resize-none" placeholder="Write full article breakdown here..." value={articleForm.content} onChange={e => setArticleForm({ ...articleForm, content: e.target.value })}></textarea>
                 </div>
-
-                <div className="space-y-1.5">
-                  <label className="font-bold text-slate-500">Brief Excerpt</label>
-                  <input type="text" placeholder="Short summary displayed on cards..." value={articleForm.excerpt} onChange={(e) => setArticleForm({ ...articleForm, excerpt: e.target.value })} className="w-full px-3 py-2.5 glass-input border" />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="font-bold text-slate-500">Article Content (Markdown support)</label>
-                  <textarea rows="6" placeholder="Write comprehensive guide contents here..." value={articleForm.content} onChange={(e) => setArticleForm({ ...articleForm, content: e.target.value })} className="w-full px-3 py-2.5 glass-input border font-mono text-[11px]" />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="font-bold text-slate-500">Cover Image URL</label>
-                  <input type="url" value={articleForm.image} onChange={(e) => setArticleForm({ ...articleForm, image: e.target.value })} className="w-full px-3 py-2.5 glass-input border" />
-                </div>
-
-                <div className="flex justify-end pt-3">
-                  <button type="submit" className="px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold shadow-md shadow-emerald-500/20">
-                    Publish Article to Blog
-                  </button>
-                </div>
+                <button type="submit" className="bg-emerald-500 hover:bg-emerald-600 text-white font-medium px-6 py-2.5 rounded-xl transition shadow-md shadow-emerald-500/10">Publish Entry</button>
               </form>
             </div>
           )}
 
-          {/* TAB 4: COMMENTS MODERATION */}
-          {activeAdminSubTab === 'comments' && (
-            <div className="glass-card p-6 border border-emerald-500/5 shadow-md space-y-4 fade-in">
-              <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
-                Moderate User Comments ({comments.length})
-              </h3>
-              
-              {comments.length > 0 ? (
-                <div className="grid grid-cols-1 gap-3.5 text-xs">
-                  {comments.map((comment) => (
-                    <div key={comment.id} className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-805 flex justify-between items-start">
-                      <div className="space-y-1 text-left">
-                        <p className="font-bold text-slate-700 dark:text-slate-200">{comment.author} <span className="text-[10px] text-slate-400 font-normal ml-1">on Article #{comment.articleId}</span></p>
-                        <p className="text-slate-500 dark:text-slate-400 leading-normal">{comment.text}</p>
+          {activeAdminSubTab === "comments" && (
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-slate-800 dark:text-white">Moderate System Comments ({comments.length})</h2>
+              {comments.length === 0 ? (
+                <p className="text-sm text-slate-400 bg-slate-50 dark:bg-slate-800/30 p-4 rounded-xl text-center">No community moderation items found.</p>
+              ) : (
+                <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
+                  {comments.map(comment => (
+                    <div key={comment.id} className="border dark:border-slate-800 p-4 rounded-xl flex items-center justify-between gap-4 bg-slate-50/50 dark:bg-slate-800/20">
+                      <div className="space-y-1">
+                        <p className="text-sm text-slate-700 dark:text-slate-300">{comment.text}</p>
+                        <span className="text-[11px] text-slate-400 flex items-center gap-1"><i className="fa-regular fa-user"></i> Context ID: {comment.id}</span>
                       </div>
-                      <button
-                        onClick={() => handleDeleteComment(comment.id)}
-                        className="px-2.5 py-1.5 rounded-lg border border-red-500/20 text-red-500 font-bold hover:bg-red-500/10"
-                      >
-                        Delete
+                      <button onClick={() => handleDeleteComment(comment.id)} className="text-red-500 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition text-sm flex items-center gap-1 whitespace-nowrap">
+                        <i className="fa-solid fa-trash-can"></i> Delete
                       </button>
                     </div>
                   ))}
                 </div>
-              ) : (
-                <div className="text-center py-6 text-slate-400 font-medium">
-                  No active comments logged.
-                </div>
               )}
             </div>
           )}
-
         </div>
-
       </div>
-
     </div>
   );
-};
+}
